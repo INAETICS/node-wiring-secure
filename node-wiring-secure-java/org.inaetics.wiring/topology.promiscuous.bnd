@@ -1,0 +1,6 @@
+Private-Package:  \
+	org.inaetics.wiring.base,\
+	org.inaetics.wiring.topology.promiscuous
+Bundle-Version: 0.1.0
+Bundle-Name: Ineatics Wiring - Topology (Promiscuous)
+Bundle-Activator: org.inaetics.wiring.topology.promiscuous.Activator

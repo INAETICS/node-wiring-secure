@@ -1,0 +1,5 @@
+Bundle-Name: Amdatu Remote - Calculator Demo api
+Bundle-Version: 0.1.0
+
+Export-Package:  \
+	org.apache.celix.calc.api

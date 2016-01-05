@@ -1,0 +1,2 @@
+livetribe:\
+	${workspace}/cnf/lib/org.livetribe.slp/org.livetribe.slp-2.2.2.jar;version=file

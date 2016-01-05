@@ -1,0 +1,6 @@
+Bundle-Activator: org.inaetics.remote.demo.calculator.client.Activator
+Bundle-Name: Amdatu Remote - Calculator Demo client
+Bundle-Version: 0.1.0
+
+Private-Package:  \
+	org.inaetics.remote.demo.calculator.client

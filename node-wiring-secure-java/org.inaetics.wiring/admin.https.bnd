@@ -1,0 +1,14 @@
+Bundle-Activator: org.inaetics.wiring.admin.https.Activator
+Bundle-Name: Inaetics Wiring - Wiring Admin (HTTPS)
+Bundle-Version: 0.1.0
+
+Private-Package:  \
+	org.inaetics.wiring.base,\
+	org.inaetics.wiring.admin.https,\
+	org.apache.commons.lang3.*
+
+Import-Package:  \
+	!org.joda.time.*,\
+	*
+
+DynamicImport-Package: *

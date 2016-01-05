@@ -1,0 +1,11 @@
+Bundle-Version: 0.1.0
+Bundle-Name: demo viewer
+Export-Package:  \
+	org.inaetics.remote.demo.inaetics.viewer,\
+	org.inaetics.remote.demo.inaetics.datastore,\
+	org.inaetics.remote.demo.inaetics.processor,\
+	org.inaetics.remote.demo.inaetics.producer,\
+	org.inaetics.remote.demo.inaetics.queue
+Private-Package:  \
+	org.inaetics.remote.demo.inaetics.viewer.impl
+Bundle-Activator: org.inaetics.remote.demo.inaetics.viewer.impl.Activator

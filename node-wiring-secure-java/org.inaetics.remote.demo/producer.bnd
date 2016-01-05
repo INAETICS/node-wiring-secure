@@ -1,0 +1,8 @@
+Bundle-Version: 0.1.0
+Bundle-Name: demo producer
+Export-Package:  \
+	org.inaetics.remote.demo.inaetics.producer,\
+	org.inaetics.remote.demo.inaetics.queue
+Private-Package:  \
+	org.inaetics.remote.demo.inaetics.producer.impl
+Bundle-Activator: org.inaetics.remote.demo.inaetics.producer.impl.Activator

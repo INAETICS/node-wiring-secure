@@ -1,0 +1,7 @@
+Bundle-Version: 0.1.0
+Bundle-Name: demo queue
+Export-Package:  \
+	org.inaetics.remote.demo.inaetics.queue
+Private-Package:  \
+	org.inaetics.remote.demo.inaetics.queue.impl
+Bundle-Activator: org.inaetics.remote.demo.inaetics.queue.impl.Activator

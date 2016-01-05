@@ -1,0 +1,13 @@
+-buildpath:  \
+	org.apache.felix.dependencymanager;version='[3.1.0, 4)',\
+	osgi.core;version='[5,6)',\
+	org.osgi.service.remoteserviceadmin;version=6.0,\
+	osgi.enterprise;version='[5,6)',\
+	javax.servlet;version=2.5.0,\
+	jackson-core-asl;version=1.9.8,\
+	jackson-mapper-asl;version=1.9.8,\
+	org.apache.commons.lang3;version=3.1.0,\
+	org.inaetics.wiring.endpoint;version=latest
+	
+-sub:  \
+	*.bnd

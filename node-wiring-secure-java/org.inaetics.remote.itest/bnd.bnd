@@ -1,0 +1,141 @@
+# This is the Amdatu Remote itest project
+#
+# The basic idea is that this project is launched as a standard BND integration test projects. The tests run
+# in the 'parent framework, but subsequently spawn one or more 'child' frameworks that get provisioned as 
+# needed (see RemoteServiceTestBase).
+#
+# Every test method runs in a clean child framework. Where possible combining multiple logical tests in a single
+# test method reduces overhead. In addition tests should to care should be taken not to polute that parent 
+# framework (eg. by installing additional bundles or leaving servcies registered).
+#
+Bundle-Version: 0.1.0
+Test-Cases: ${classes;CONCRETE;EXTENDS;junit.framework.TestCase}
+
+# This bundles must either embed or import any packages the itest framework code uses as well as the packages the
+# discovery implementation tests requires.
+#
+#
+# remoteserviceadmin packages:
+#
+#   org.osgi.service.remoteserviceadmin.*				: the R6 packages exposed to the tests
+#
+# itest framework packages:
+#
+#   org.amdatu.remote.itest.* 					: this project's own packages
+#   org.apache.felix.framework.*,\        				: so we can launch (felix) frameworks
+#
+# TODO: Support FrameworkFactory through classpath? Note the SPI lookup will not work because it will use the app classloader
+#
+Private-Package: \
+  org.osgi.service.remoteserviceadmin.*;version=1.1.0;-split-package:=first,\
+  org.inaetics.remote.admin.itest.api,\
+  org.inaetics.remote.itest.*,\
+  org.inaetics.remote,\
+  org.apache.commons.*,\
+  org.apache.felix.framework.*
+
+Import-Package: !org.apache.log4j.*,\
+  !org.slf4j.*,\
+  !sun.misc.*,\
+  *
+
+# The felix framework looks for a default framework properties file containing all defaults. This is a copy of the felix
+# framework 4.2.1 bundle.
+#
+# TODO: Including the felix framework as an embedded jar might be cleaner? See FrameworkFactory support.
+#
+Include-Resource: @${repo;org.apache.felix.framework}!/default.properties
+
+# This bundle's classloader is the framework classloader for child frameworks. Therefore it must be able to dynamically 
+# load any framework packages those child frameworks expose.
+#
+DynamicImport-Package: *
+
+
+# This project's buildpath must contain any packages the itest framework code uses as well as the packages the
+# discovery implementation tests requires.
+#
+# NOTE: R6 remoteserviceadmin must be before the R5 enterprise so it overrides it on the classpath
+#
+-buildpath: \
+  osgi.core;version='[5,6)',\
+  org.osgi.service.remoteserviceadmin;version=6.0,\
+  osgi.enterprise;version='[5,6)',\
+  org.apache.felix.framework;version=4.2.1,\
+  junit.osgi,\
+  org.mockito.mockito-all,\
+  org.inaetics.remote;version=project,\
+  org.apache.felix.dependencymanager;version='[3.1.0, 4)',\
+  org.apache.commons.lang3
+  
+# This project's runbundles must contain the bundles the itest bundles itself requires to resolve and operate. It must
+# not contain the bundles under test as these are provisioned into child frameworks by the tests.
+#
+# NOTE: Felix servlet-api provides us with a Servlet 3.0 bundles that also exports itself as Servlet 2.6. This allows
+# Bundles requiring [2.3,3) to operate normally because 3.0 is beckward compatible. Also see system packages below.
+#
+-runbundles: \
+  osgi.cmpn;version=4.3.1,\
+  org.apache.felix.http.servlet-api;version='[1.0.0, 1.1)',\
+  org.apache.felix.configadmin;version=1.6.0,\
+  org.apache.felix.dependencymanager;version='[3.1.0, 4)',\
+  slf4j.api,\
+  slf4j.simple
+  
+-runpath: \
+  org.mockito.mockito-all
+
+-runee: JavaSE-1.8
+-runvm: -ea
+-runfw: org.apache.felix.framework
+-runsystempackages: sun.reflect, sun.misc
+
+# The runproperties specify the bundlepaths of bundles to be povisioned into test frameworks and the
+# extra system package for the test frameworks.
+# 
+# Because the tests run in the parent framework all packages that brdige between parent and child
+# framework must be expose from the parent classloader into the child framworks.
+#  
+# TODO: Felix configadmin implements R5 api and thus does not resolve against cmpn 4.3.1
+# TODO: If we embed BND we can resolve the bundle paths at runtime
+#
+-runproperties:	\
+  amdatu.remote.logging.level=4,\
+  amdatu.remote.console.level=0,\
+  felix.log.level=2,\
+  felix.cm.loglevel=1,\
+  itest.bundles.default="\
+    ${repo;org.apache.felix.eventadmin;latest},\
+    ${repo;org.apache.felix.configadmin;1.6.0}",\
+  itest.bundles.admin.wiring="\
+    ${repo;org.inaetics.remote.admin.wiring;latest},\
+	${repo;org.inaetics.wiring.base;latest},\
+	${repo;org.inaetics.wiring.admin.https;latest},\
+	${repo;org.inaetics.wiring.discovery.etcd;latest},\
+	${repo;org.inaetics.wiring.topology.promiscuous;latest},\
+	${repo;org.inaetics.wiring.endpoint;latest},\
+    ${repo;org.apache.felix.http.api;[2.3.0,3)},\
+    ${repo;org.apache.felix.http.jetty;[2.3.0,3)},\
+	${repo;jackson-core-asl},\
+	${repo;jackson-mapper-asl}",\
+  itest.bundles.topology.promiscuous="\
+    ${repo;org.amdatu.remote.topology.promiscuous;latest}",\
+  itest.bundles.discovery.etcd="\
+    ${repo;org.amdatu.remote.discovery.etcd;latest}",\
+  itest.systempackages="\
+    sun.misc,\
+    sun.reflect,\
+    javax.servlet;version=2.6,\
+    javax.servlet.http;version=2.6,\
+    javax.servlet;version=3.0,\
+    javax.servlet.annotation;version=3.0,\
+    javax.servlet.descriptor;version=3.0,\
+    javax.servlet.http;version=3.0,\
+    org.inaetics.remote.admin.itest.api,\
+    org.osgi.service.cm;version=1.5,\
+    org.osgi.service.event;version=1.3,\
+    org.osgi.service.http;version=1.2.1,\
+    org.osgi.service.log;version=1.3,\
+    org.osgi.service.metatype;version=1.2,\
+    org.osgi.service.remoteserviceadmin;version=1.1.0,\
+    org.apache.felix.dm;version=3.1.0"

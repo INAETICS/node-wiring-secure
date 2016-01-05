@@ -1,0 +1,2 @@
+remoteserviceadmin:\
+	${workspace}/cnf/localrepo/org.osgi.service.remoteserviceadmin/org.osgi.service.remoteserviceadmin-6.0.0.jar;version=file

@@ -1,0 +1,9 @@
+Bundle-Version: 0.1.0
+Bundle-Name: demo processor
+Export-Package:  \
+	org.inaetics.remote.demo.inaetics.processor,\
+	org.inaetics.remote.demo.inaetics.datastore,\
+	org.inaetics.remote.demo.inaetics.queue
+Private-Package:  \
+	org.inaetics.remote.demo.inaetics.processor.impl
+Bundle-Activator: org.inaetics.remote.demo.inaetics.processor.impl.Activator

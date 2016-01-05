@@ -1,0 +1,5 @@
+Private-Package:  \
+	org.inaetics.remote.demo.echoClient
+Bundle-Name: Ineatics Wiring - Echo Client
+Bundle-Version: 0.1.0
+Bundle-Activator: org.inaetics.remote.demo.echoClient.Activator

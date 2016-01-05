@@ -1,0 +1,6 @@
+Private-Package:  \
+	org.inaetics.wiring.demo.echoService,\
+	org.inaetics.wiring.demo
+Bundle-Activator: org.inaetics.wiring.demo.echoService.Activator
+Bundle-Version: 0.1.0
+Bundle-Name: Ineatics Wiring - Echo Service

@@ -1,0 +1,2 @@
+zookeeper:\
+	${workspace}/cnf/localrepo/org.apache.hadoop.zookeeper/org.apache.hadoop.zookeeper-3.4.6.jar;version=file

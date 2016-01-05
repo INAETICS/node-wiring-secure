@@ -1,0 +1,7 @@
+Private-Package:  \
+	org.inaetics.remote.demo.echoService.impl
+Bundle-Activator: org.inaetics.remote.demo.echoService.impl.Activator
+Bundle-Version: 0.1.0
+Bundle-Name: Ineatics Wiring - Echo Service
+Export-Package:  \
+	org.inaetics.remote.demo.echoService

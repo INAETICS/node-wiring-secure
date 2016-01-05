@@ -1,0 +1,7 @@
+Bundle-Version: 0.1.0
+Bundle-Name: demo datastore
+Export-Package:  \
+	org.inaetics.remote.demo.inaetics.datastore
+Private-Package:  \
+	org.inaetics.remote.demo.inaetics.datastore.impl
+Bundle-Activator: org.inaetics.remote.demo.inaetics.datastore.impl.Activator

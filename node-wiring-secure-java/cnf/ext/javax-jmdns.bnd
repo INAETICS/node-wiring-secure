@@ -1,0 +1,2 @@
+javax-jmdns:\
+	${workspace}/cnf/localrepo/javax.jmdns/javax.jmdns-3.4.2.jar;version=file

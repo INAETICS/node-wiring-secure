@@ -1,0 +1,11 @@
+-buildpath:  \
+	osgi.core;version='[5,6)',\
+	osgi.enterprise;version='[5,6)',\
+	org.apache.felix.dependencymanager;version='[3.1.0, 4)',\
+	javax.servlet;version=2.5.0,\
+	junit.osgi;version=3.8.2,\
+	org.mockito.mockito-all;version=1.9,\
+	org.apache.felix.gogo.runtime;version=0.10,\
+	org.inaetics.wiring.endpoint;version=latest
+	
+-sub: *.bnd
