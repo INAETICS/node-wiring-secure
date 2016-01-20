@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Start scrip for the Node Agent
+# Start scrip for the Secure Node Agent
 #
-# (C) 2014 INAETICS, <www.inaetics.org> - Apache License v2.
+# (C) 2014/2016 INAETICS, <www.inaetics.org> - Apache License v2.
 
 cd $(dirname $0)
 
@@ -95,6 +95,7 @@ start_agent () {
     -Dagent.discovery.serverurls=http://$current_provisioning_service \
     -Dagent.controller.syncinterval=10 \
     -Dorg.osgi.service.http.port=$agent_port \
+    -Dorg.osgi.service.http.port.secure=$agent_port_secure \
     -Damdatu.remote.logging.level=5 \
     -Damdatu.remote.console.level=5 \
 	-Dorg.apache.felix.http.host=$agent_ipv4 \
@@ -108,8 +109,17 @@ start_agent () {
 	-Dorg.inaetics.wiring.discovery.etcd.node=$agent_id \
 	-Dorg.inaetics.wiring.discovery.etcd.connecturl=http://$ETCDCTL_PEERS \
 	-Dorg.inaetics.wiring.discovery.etcd.rootpath=/inaetics/wiring \
-	-Dorg.inaetics.wiring.admin.http.zone=zone1 \
-	-Dorg.inaetics.wiring.admin.http.node=$agent_id \
+	-Dorg.inaetics.wiring.admin.https.zone=zone1 \
+	-Dorg.inaetics.wiring.admin.https.node=$agent_id \
+  -Dorg.apache.felix.http.enable=true \
+  -Dorg.apache.felix.https.enable=true \
+  -Dorg.apache.felix.https.keystore="/inkeys/inaetics.keystore" \
+  -Dorg.apache.felix.https.keystore.password="changeit" \
+  -Dorg.apache.felix.https.keystore.key.password="changeit" \
+  -Dorg.apache.felix.https.truststore="/inkeys/inaetics.truststore" \
+  -Dorg.apache.felix.https.truststore.password="changeit" \
+  -Dorg.apache.felix.https.truststore.type="JKS" \
+  -Dorg.apache.felix.https.clientcertificate="needs" \
     -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000"
     
   local props2=-Dgosh.args="--nointeractive --command telnetd --ip=0.0.0.0 start"
@@ -201,6 +211,12 @@ fi
 agent_port=$HOSTPORT
 if [ "$agent_port" == "" ]; then
   agent_port=8080
+fi
+
+# get "secure" port from env variable set by kubernetes pod config
+agent_port_secure=$HOSTPORT_SECURE
+if [ "$agent_port_secure" == "" ]; then
+  agent_port_secure=8443
 fi
 
 # we are healthy, used by kubernetes
