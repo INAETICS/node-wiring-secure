@@ -1,7 +1,8 @@
 # Dockerfile for inaetics/node-agent-service
 FROM slintes/jre8:java8-8u65
 
-MAINTAINER Marc Sluiter <marc.sluiter@luminis.eu>
+#Based on image from Marc Sluiter <marc.sluiter@luminis.eu>
+MAINTAINER Inaetics Project Team <info@inaetics.org>
 
 # Install etcdctl
 RUN cd /tmp \

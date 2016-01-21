@@ -1,0 +1,651 @@
+#################################
+# Routines                      # 
+#################################
+
+# Utility routine that copies all resources from $source_repo to $target_repo
+# if they do not yet exist.
+copy_repositories = {
+  each ($source_repo find) {
+    identity = $it getIdentity
+    version = $it getVersion
+
+    if { (coll:first ($target_repo find "(&(osgi.identity=$identity)(version=$version))")) } {
+      echo " -> resource exists: $identity/$version"
+    } {
+      devnull=(repo:cp $source_repo $target_repo "(&(osgi.identity=$identity)(version=$version))")
+      echo " -> resource copied: $identity/$version"
+    }
+  }
+}
+
+# Utility routine that deploys the autoconf resource process into $workspace
+# if it is not yet present.
+ensure_autoconf_present = {
+  echo "Handling autoconf"
+  autoconf = (coll:first ($target_repo find "(osgi.identity=org.apache.felix.deployment.rp.autoconf)"))
+  if { $autoconf } {
+    echo " -> autoconf resource exists"
+    if { (coll:first ($workspace lrp "(Bundle-SymbolicName=org.apache.felix.deployment.rp.autoconf)")) } {
+      echo " -> autoconf artifact exists"
+    } {
+      identity = $autoconf getIdentity
+      version = $autoconf getVersion
+      name = "$identity - $version"
+      url = $autoconf getUrl
+      mimetype = $autoconf getMimetype
+      $workspace ca [ artifactName="$name" url="$url" mimetype="$mimetype" Bundle-SymbolicName="$identity" \
+             Bundle-Version="$version" Deployment-ProvidesResourceProcessor="org.osgi.deployment.rp.autoconf" ]
+      echo " -> autoconf resource created"
+    }
+  } {
+    echo " -> autoconf resource not found"
+  }
+}
+
+# Definition routine for creating a target mapping. A mapping must contain
+# a productname and zero or more target definitions. 
+create_target_mapping = {
+  productName=($args get "product")
+  targets=($args get "targets")
+  echo "Processing target mapping for product $productName"
+  _remove_targets
+  _create_targets
+}
+
+# Definition routine for creating a distribution mapping. A mapping must contain
+# a productname and zero or more distribution definitions. 
+create_distribution_mapping = {
+  productName=($args get "product")
+  distributions=($args get "distributions")
+  echo "Processing distribution mapping for product $productName"
+  _remove_distributions
+  _create_distributions
+}
+
+# Definition routine for creating a feature mapping. A mapping must contain
+# a product name and zero or more feature definitions. 
+create_feature_mapping = {
+  productName=($args get "product")
+  features=($args get "features")
+  echo "Processing feature mapping for product $productName"
+  _remove_features
+  _create_features
+}
+
+# Supporting routine for create_target_mapping
+_create_targets = {
+  echo "Creating target for product $productName"
+  each $targets {
+    target=$it
+    _create_target
+  }
+}
+
+# Supporting routine for create_target_mapping
+_create_target = {
+  targetName=($target get "name")
+  echo "Creating target $targetName"
+  targetObject=($workspace ct ["id"="$targetName" "product"="$productName"])
+  $targetObject setautoapprove true
+  each ($target get "distributions") {
+    name=($it get "name")
+    $workspace cd2t "(name=$name)" "(id=$targetName)" "1" "N"
+  }
+}
+
+# Supporting routine for create_target_mapping
+_remove_targets = {
+  echo "Removing targets for product name $productName"
+  # remove associations...
+  each ($workspace ld2t "(product=$productName)") { $workspace dd2t $it }
+  # remove targets...
+  each ($workspace lt "(product=$productName)") { $workspace dt $it }
+}
+
+# Supporting routine for create_distribution_mapping
+_create_distributions = {
+  echo "Creating distributions for product $productName"
+  each $distributions {
+    distribution=$it
+    _create_distribution
+  }
+}
+
+# Supporting routine for create_distribution_mapping
+_create_distribution = {
+  distributionName=($distribution get "name")
+  echo "Creating distribution $distributionName"
+  distributionObject=($workspace cd ["name"="$distributionName" "product"="$productName"])
+#  distributionObject=(coll:first ($workspace ld "(name=$distributionName)"))
+  each ($distribution get "attributes") {
+    $distributionObject addAttribute ($it get "key") ($it get "value")
+  }
+  each ($distribution get "tags") {
+    $distributionObject addTag ($it get "key") ($it get "value")
+  }
+  each ($distribution get "features") {
+    featureName=($it get "name")
+    $workspace cf2d "(name=$featureName)" "(name=$distributionName)"
+  }
+}
+
+# Supporting routine for create_distribution_mapping
+_remove_distributions = {
+  echo "Removing distributions for product name $productName"
+  # remove associations...
+  each ($workspace lf2d "(product=$productName)") { $workspace df2d $it }
+  # remove distributions...
+  each ($workspace ld "(product=$productName)") { $workspace dd $it }
+}
+
+# Supporting routine for create_feature_mapping
+_remove_features = {
+  echo "Removing features for product $productName"
+  # remove associations...
+  each ($workspace la2f "(product=$productName)") { $workspace da2f $it }
+  # remove features...
+  each ($workspace lf "(product=$productName)") { $workspace df $it }
+}
+
+# Supporting routine for create_feature_mapping
+_create_features = {
+  echo "Creating features for product name $productName"
+  each ($features) {
+    feature=($it)
+    featureName=($feature get "name")
+    _create_feature
+  }
+}
+
+# Supporting routine for create_feature_mapping
+_create_feature = {
+  echo "Creating feature $featureName"
+  featureObject=($workspace cf ["name"="$featureName" "product"="$productName"])
+#  featureObject=(coll:first ($workspace lf "(name=$featureName)"))
+  if { ($feature get "attributes") }{ \
+    each ($feature get "attributes") {
+      $featureObject addAttribute ($it get "key") ($it get "value")
+    }
+  }
+  if { ($feature get "tags") }{ \
+    each ($feature get "tags"){
+      $featureObject addTag ($it get "key") ($it get "value")
+    }
+  }
+  featureArtifacts=($feature get "artifacts")
+  if { $featureArtifacts }{\
+    each ($featureArtifacts) {
+      artifact=$it
+      artifactIdentity=($artifact get "identity")
+      artifactVersion=($artifact get "version")
+      artifactName = "$artifactIdentity - $artifactVersion"
+      artifactObject=(coll:first ($workspace la "(artifactName=$artifactName)"))
+      if { $artifactObject }{\
+        echo "Found existing artifact $artifactName"
+      }{\
+        _create_artifact
+      }
+      $workspace ca2f "(artifactName=$artifactName)" "(name=$featureName)"
+    }
+  }
+}
+
+# Supporting routine for create_feature_mapping
+_create_artifact = {
+  echo "Creating new artifact for $artifactIdentity/$artifactVersion"
+  resource = (coll:first ($target_repo find "(&(osgi.identity=$artifactIdentity)(version=$artifactVersion))"))
+  if { ($resource) }{\
+    resourceUrl = ($resource getUrl)
+    resourceType = ($resource getMimetype)
+    if { $resourceType equals "application/xml:osgi-autoconf" }{\
+      $workspace ca [ artifactName="$artifactName" url="$resourceUrl" mimetype="$resourceType" filename="$artifactName" processorPid="org.osgi.deployment.rp.autoconf" ]
+    }{\
+      $workspace ca [ artifactName="$artifactName" url="$resourceUrl" mimetype="$resourceType" Bundle-SymbolicName="$artifactIdentity" Bundle-Version="$artifactVersion" ]
+    }
+    echo "Created $artifactName"
+  }{\
+    echo "Unable to locate resource for artifact $artifactName"
+    $failures add "Unable to locate resource: $artifactName"
+  }
+}
+
+#################################
+# Main                          # 
+#################################
+
+failures=[]
+
+source_index = (repo:index "/bundles/default-resources")
+source_repo = (repo:repo "R5" "$source_index")
+target_repo = (repo:repo "OBR" "http://localhost:8080/obr/repository.xml")
+
+echo "Deploying resources"
+copy_repositories
+
+echo "Opening workspace"
+workspace = (ace:cw)
+
+echo "Ensuring AutoConf RP is present"
+ensure_autoconf_present
+
+create_feature_mapping [
+  "product"="demonstrator"
+  "features"=[
+    [
+      "name"="celix_common"
+      "artifacts"=[
+        ["identity"="apache_celix_rs_topology_manager" "version"="0.0.1"]
+        ["identity"="apache_celix_rsa_discovery_etcd" "version"="0.0.1"]
+        ["identity"="apache_celix_shell" "version"="1.0.0"]
+        ["identity"="apache_celix_remote_shell" "version"="0.0.1"]
+      ]
+    ]
+    [
+      "name"="celix_rsa_http"
+      "artifacts"=[
+        ["identity"="apache_celix_remote_service_admin_http" "version"="0.0.1"]
+      ]
+    ]
+    [
+      "name"="celix_rsa_wiring"
+      "artifacts"=[
+        ["identity"="apache_celix_wiring_admin" "version"="0.0.1"]
+        ["identity"="apache_celix_wiring_node_discovery_etcd" "version"="0.0.1"]
+        ["identity"="apache_celix_wiring_remote_service_admin" "version"="0.0.1"]
+        ["identity"="apache_celix_wiring_topology_manager" "version"="0.0.1"]
+      ]
+    ]
+    [
+      "name"="celix_demo_queue"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.sample_queue" "version"="1.0.0"]
+      ]
+    ]
+    [
+      "name"="celix_demo_producer"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.producer" "version"="1.0.0"]
+      ]
+    ]
+    [
+      "name"="celix_demo_datastore"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.data_store" "version"="1.0.0"]
+      ]
+    ]
+    [
+      "name"="celix_demo_processor"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.processor" "version"="1.0.0"]
+      ]
+    ]
+    [
+      "name"="celix_demo_statistic_tracker"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.statistic_tracker" "version"="1.0.0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_api"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.api.data" "version"="1.0.0"]
+        ["identity"="org.inaetics.demonstrator.api.datastore" "version"="1.0.0"]
+        ["identity"="org.inaetics.demonstrator.api.processor" "version"="1.0.0"]
+        ["identity"="org.inaetics.demonstrator.api.producer" "version"="1.0.0"]
+        ["identity"="org.inaetics.demonstrator.api.queue" "version"="1.0.0"]
+        ["identity"="org.inaetics.demonstrator.api.stats" "version"="1.0.0"]
+        ["identity"="org.inaetics.demonstrator.api.coordinator" "version"="1.0.0"]
+        ["identity"="org.inaetics.demonstrator.api.clusterinfo" "version"="1.0.0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_queue"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.queue" "version"="0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_producer"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.producer.periodic" "version"="0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_datastore"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.datastore" "version"="0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_processor"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.processor" "version"="0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_viewer"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.view" "version"="0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_clusterinfo"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.clusterinfo" "version"="0"]
+      ]
+    ]
+    [
+      "name"="felix_demo_coordinator"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.coordinator.autoscaler" "version"="0"]
+        ["identity"="org.inaetics.demonstrator.java_impl.coordinator.k8s" "version"="0"]
+        ["identity"="org.amdatu.kubernetes" "version"="1.0.2"]
+        ["identity"="io.reactivex.rxjava" "version"="1.0.12"]
+        ["identity"="com.fasterxml.jackson.core.jackson-annotations" "version"="2.3.0"]
+        ["identity"="com.fasterxml.jackson.core.jackson-databind" "version"="2.3.1"]
+        ["identity"="org.apache.commons.lang" "version"="2.6.0"]
+        ["identity"="slf4j.api" "version"="1.7.7"]
+        ["identity"="slf4j.simple" "version"="1.7.7"]
+      ]
+    ]
+    [
+      "name"="felix_demo_utilization"
+      "artifacts"=[
+        ["identity"="org.inaetics.demonstrator.java_impl.utilization" "version"="0"]
+      ]
+    ]
+    [
+      "name"="felix_agent_base"
+      "artifacts"=[
+        ["identity"="org.apache.felix.configadmin" "version"="1.8.0"]
+        ["identity"="org.apache.felix.dependencymanager" "version"="3.2.0"]
+        ["identity"="org.apache.felix.dependencymanager.runtime" "version"="3.1.0"]
+        ["identity"="org.apache.felix.eventadmin" "version"="1.3.2"]
+        ["identity"="org.apache.felix.log" "version"="1.0.1"]
+        ["identity"="org.apache.felix.metatype" "version"="1.0.8"]
+        ["identity"="org.amdatu.configurator.api" "version"="1.0.0"]
+        ["identity"="org.amdatu.configurator.properties" "version"="1.0.0"]
+        ["identity"="org.amdatu.configurator.shell" "version"="1.0.0"]
+      ]
+    ]
+    [
+      "name"="felix_agent_shell"
+      "artifacts"=[
+        ["identity"="org.apache.felix.dependencymanager.shell" "version"="3.2.0"]
+      ]
+    ]
+    [
+      "name"="felix_agent_web"
+      "artifacts"=[
+        ["identity"="org.apache.felix.http.servlet-api" "version"="1.0.1"]
+        ["identity"="org.apache.felix.http.jetty" "version"="2.2.2"]
+        ["identity"="org.apache.felix.http.whiteboard" "version"="2.3.2"]
+        ["identity"="org.amdatu.web.resourcehandler" "version"="1.0.5"]
+        ["identity"="com.fasterxml.jackson.core.jackson-core" "version"="2.3.2"]
+      ]
+    ]
+    [
+      "name"="felix_agent_webconsole"
+      "artifacts"=[
+        ["identity"="de.twentyeleven.skysail.org.json-osgi" "version"="20080701.0.0"]
+        ["identity"="org.apache.commons.fileupload" "version"="1.3.1"]
+        ["identity"="org.apache.commons.io" "version"="2.4.0"]
+        ["identity"="org.apache.felix.webconsole" "version"="4.2.2"]
+      ]
+    ]
+    [
+      "name"="felix_agent_rsa_base"
+      "artifacts"=[
+        ["identity"="org.amdatu.remote.discovery.etcd" "version"="0.1.3"]
+        ["identity"="org.amdatu.remote.topology.promiscuous" "version"="0.1.3"]
+      ]
+    ]
+    [
+      "name"="felix_agent_rsa_http"
+      "artifacts"=[
+        ["identity"="org.amdatu.remote.admin.http" "version"="0.1.4"]
+      ]
+    ]
+    [
+      "name"="felix_agent_rsa_wiring"
+      "artifacts"=[
+        ["identity"="org.inaetics.remote.admin.wiring" "version"="0.1.0"]
+        ["identity"="org.inaetics.wiring.endpoint" "version"="0.1.0"]
+        ["identity"="org.inaetics.wiring.base" "version"="0.1.0"]
+        ["identity"="org.inaetics.wiring.topology.promiscuous" "version"="0.1.0"]
+        ["identity"="org.inaetics.wiring.discovery.etcd" "version"="0.1.0"]
+        ["identity"="org.inaetics.wiring.admin.https" "version"="0.1.0"]
+        ["identity"="org.inaetics.certificateservice" "version"="1.0.0"]
+        ["identity"="org.inaetics.truststorage" "version"="1.0.0.201601191521"]
+        ["identity"="org.amdatu.scheduling.quartz" "version"="1.0.1"]
+        ["identity"="org.amdatu.scheduling.api" "version"="1.0.1"]
+        ["identity"="com.googlecode.json-simple" "version"="1.1.1"]
+      ]
+    ]
+  ]
+]
+
+create_distribution_mapping [
+  "product"="demonstrator"
+  "distributions"=[
+    [
+      "name"="celix_demo_shared"
+      "features"=[
+        ["name"="celix_common"]
+        ["name"="celix_rsa_wiring"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="celix_demo_queue"
+      "features"=[
+        ["name"="celix_demo_queue"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="celix_demo_producer"
+      "features"=[
+        ["name"="celix_demo_producer"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="celix_demo_datastore"
+      "features"=[
+        ["name"="celix_demo_datastore"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="celix_demo_processor"
+      "features"=[
+        ["name"="celix_demo_processor"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="celix_demo_statistic_tracker"
+      "features"=[
+        ["name"="celix_demo_statistic_tracker"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_shared"
+      "features"=[
+        ["name"="felix_agent_base"]
+        ["name"="felix_agent_shell"]
+        ["name"="felix_agent_web" ]
+        ["name"="felix_agent_webconsole" ]
+        ["name"="felix_agent_rsa_base" ]
+        ["name"="felix_agent_rsa_wiring" ]
+        ["name"="felix_demo_api" ]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_queue"
+      "features"=[
+        ["name"="felix_demo_queue"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_producer"
+      "features"=[
+        ["name"="felix_demo_producer"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_datastore"
+      "features"=[
+        ["name"="felix_demo_datastore"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_processor"
+      "features"=[
+        ["name"="felix_demo_processor"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_viewer"
+      "features"=[
+        ["name"="felix_demo_viewer"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_clusterinfo"
+      "features"=[
+        ["name"="felix_demo_clusterinfo"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_coordinator"
+      "features"=[
+        ["name"="felix_demo_coordinator"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+    [
+      "name"="felix_demo_utilization"
+      "features"=[
+        ["name"="felix_demo_utilization"]
+      ]
+      "attributes"=[]
+      "tags"=[]
+    ]
+  ]
+]
+
+create_target_mapping [
+  "product"="demonstrator"
+  "targets"=[
+    [
+      "name"="celix_1"
+      "distributions"=[
+        ["name"="celix_demo_shared"]
+        ["name"="celix_demo_producer"]
+      ]
+    ]
+    [
+      "name"="celix_2"
+      "distributions"=[
+        ["name"="celix_demo_shared"]
+        ["name"="celix_demo_queue"]
+      ]
+    ]
+    [
+      "name"="celix_3"
+      "distributions"=[
+        ["name"="celix_demo_shared"]
+        ["name"="celix_demo_processor"]
+      ]
+    ]
+    [
+      "name"="celix_4"
+      "distributions"=[
+        ["name"="celix_demo_shared"]
+        ["name"="celix_demo_producer"]
+      ]
+    ]
+    [
+      "name"="celix_stats"
+      "distributions"=[
+        ["name"="celix_demo_shared"]
+        ["name"="celix_demo_statistic_tracker"]
+      ]
+    ]
+    [
+      "name"="felix_1"
+      "distributions"=[
+        ["name"="felix_demo_shared"]
+        ["name"="felix_demo_datastore"]
+        ["name"="felix_demo_viewer"]
+        ["name"="felix_demo_clusterinfo"]
+        ["name"="felix_demo_coordinator"]
+        ["name"="felix_demo_utilization"]
+      ]
+    ]
+    [
+      "name"="felix_2"
+      "distributions"=[
+        ["name"="felix_demo_shared"]
+        ["name"="felix_demo_queue"]
+      ]
+    ]
+    [
+      "name"="felix_3"
+      "distributions"=[
+        ["name"="felix_demo_shared"]
+        ["name"="felix_demo_processor"]
+      ]
+    ]
+    [
+      "name"="felix_4"
+      "distributions"=[
+        ["name"="felix_demo_shared"]
+        ["name"="felix_demo_producer"]
+      ]
+    ]
+  ]
+]
+
+failureSize=($failures size)
+if { math:gt $failureSize 0 }{\
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  echo "Not committing workspace due to failures:"
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  each $failures {
+    echo $it
+  }
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+}{\
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  echo "Committing workspace!"
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  $workspace commit
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+}
+ace:rw $workspace
+telnetd --ip=0.0.0.0 start
