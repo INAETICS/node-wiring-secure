@@ -1,0 +1,4 @@
+bouncycastle:\
+	${workspace}/cnf/lib/bouncycastle/bcpkix-1.53.0.jar;version=file,\
+	${workspace}/cnf/lib/bouncycastle/bcprov-1.53.0.jar;version=file
+ 

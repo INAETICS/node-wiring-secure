@@ -14,13 +14,17 @@ import java.net.URL;
 import java.security.KeyStore;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.inaetics.truststorage.TrustStorageService;
 import org.inaetics.wiring.WiringEndpointDescription;
 import org.inaetics.wiring.base.IOUtil;
 import org.osgi.framework.ServiceException;
+
+import io.netty.handler.ssl.SslContext;
 
 /**
  * Implementation of an secure http client that can send messages to remote wiring endpoints.
@@ -32,6 +36,7 @@ import org.osgi.framework.ServiceException;
 public final class HttpsClientEndpoint {
 
     private static final int FATAL_ERROR_COUNT = 5;
+    private volatile TrustStorageService m_trustService;
 
     private final WiringEndpointDescription m_endpoint;
     private final HttpsAdminConfiguration m_configuration;
@@ -39,10 +44,11 @@ public final class HttpsClientEndpoint {
     private ClientEndpointProblemListener m_problemListener;
     private int m_remoteErrors;
 
-    public HttpsClientEndpoint(WiringEndpointDescription endpoint, HttpsAdminConfiguration configuration) {
+    public HttpsClientEndpoint(WiringEndpointDescription endpoint, HttpsAdminConfiguration configuration , TrustStorageService trustService) {
         m_endpoint = endpoint;
         m_configuration = configuration;
         m_remoteErrors = 0;
+        m_trustService = trustService;
     }
 
     /**
@@ -102,11 +108,22 @@ public final class HttpsClientEndpoint {
             keyStore.load(trustStore, truststorePassword);
             trustStore.close();
             
+            
+            KeyStore key = m_trustService.getKeyStore();
+            
+            
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(key, ("changeit").toCharArray());
+           
             // trust manager factory
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+
     		tmf.init(keyStore);
     		SSLContext ctx = SSLContext.getInstance("TLS");
-    		ctx.init(null, tmf.getTrustManagers(), null);
+    		ctx.init(null																																																																																																																																																																																																																				, tmf.getTrustManagers(), null);
+
+
     		SSLSocketFactory sslFactory = ctx.getSocketFactory();
             
             connection.setSSLSocketFactory(sslFactory);
@@ -117,8 +134,8 @@ public final class HttpsClientEndpoint {
             connection.setReadTimeout(m_configuration.getReadTimeout());
             connection.setRequestProperty("Content-Type", "text/plain;charset=utf-8");
             connection.connect();
+            System.out.println(connection.getCipherSuite());
             outputStream = connection.getOutputStream();
-            
             outputStream.write(message.getBytes("UTF-8"));
             outputStream.flush();
 

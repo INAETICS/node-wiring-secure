@@ -6,6 +6,7 @@ package org.inaetics.wiring.admin.https;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.inaetics.truststorage.TrustStorageService;
 import org.inaetics.wiring.WiringEndpointDescription;
 import org.inaetics.wiring.base.AbstractComponentDelegate;
 
@@ -22,19 +23,26 @@ public class HttpsClientEndpointFactory extends AbstractComponentDelegate implem
 	
     private ClientEndpointProblemListener m_problemListener;
     private HttpsAdminConfiguration m_configuration;
+    private volatile TrustStorageService trustService;
+    
+    public void setTrustStorageService(TrustStorageService trustStorage)
 
+    {
+    	this.trustService = trustStorage;
+    }
     /**
      * Creates a new {@link HttpsClientEndpointFactory} instance.
      */
     public HttpsClientEndpointFactory(WiringAdminFactory factory, HttpsAdminConfiguration configuration) {
     	super(factory);
         m_configuration = configuration;
+        trustService = factory.getTrustStorageService();
     }
 
     public WiringSenderImpl addEndpoint(WiringEndpointDescription endpoint) {
     	HttpsClientEndpoint client = m_clients.get(endpoint);
     	if (client == null) {
-    		client = new HttpsClientEndpoint(endpoint, m_configuration);
+    		client = new HttpsClientEndpoint(endpoint, m_configuration,trustService);
     		m_clients.put(endpoint.getId(), client);
     		client.setProblemListener(this);
     	}

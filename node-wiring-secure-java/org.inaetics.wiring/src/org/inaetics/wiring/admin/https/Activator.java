@@ -3,6 +3,12 @@
  */
 package org.inaetics.wiring.admin.https;
 
+import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_KEYSTORE_FILE_NAME;
+import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_KEYSTORE_KEY_PASSWORD;
+import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_KEYSTORE_PASSWORD;
+import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_FILE_NAME;
+import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_PASSWORD;
+import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_TYPE;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONNECT_TIMEOUT_CONFIG_KEY;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.NODE_CONFIG_KEY;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.PATH_CONFIG_KEY;
@@ -11,12 +17,6 @@ import static org.inaetics.wiring.admin.https.HttpsAdminConstants.PROTOCOL_VERSI
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.READ_TIMEOUT_CONFIG_KEY;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.SERVICE_PID;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.ZONE_CONFIG_KEY;
-import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_KEYSTORE_FILE_NAME;
-import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_KEYSTORE_PASSWORD;
-import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_KEYSTORE_KEY_PASSWORD;
-import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_FILE_NAME;
-import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_PASSWORD;
-import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_TYPE;
 import static org.inaetics.wiring.base.ServiceUtil.getConfigIntValue;
 import static org.inaetics.wiring.base.ServiceUtil.getConfigStringValue;
 
@@ -27,6 +27,8 @@ import java.util.Hashtable;
 import org.apache.felix.dm.Component;
 import org.apache.felix.dm.DependencyActivatorBase;
 import org.apache.felix.dm.DependencyManager;
+import org.inaetics.certificateservice.api.CertificateService;
+import org.inaetics.truststorage.TrustStorageService;
 import org.inaetics.wiring.WiringAdmin;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -176,10 +178,11 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
 		Component listenerComponent = createComponent()
 				.setInterface(WiringAdmin.class.getName(), properties)
 				.setImplementation(factory)
-				.add(createServiceDependency().setService(HttpService.class)
-						.setRequired(true))
-				.add(createServiceDependency().setService(LogService.class)
-						.setRequired(false));
+				.add(createServiceDependency().setService(HttpService.class).setRequired(true))
+				.add(createServiceDependency().setService(TrustStorageService.class).setRequired(true))
+				.add(createServiceDependency().setService(LogService.class).setRequired(false))
+				.add(createServiceDependency().setService(CertificateService.class).setRequired(true));
+
 		m_listenerComponent = listenerComponent;
 		m_dependencyManager.add(listenerComponent);
 

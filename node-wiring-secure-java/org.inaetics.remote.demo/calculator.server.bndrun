@@ -5,7 +5,7 @@
 
 -resolve.effective: active
 
--runbundles:  \
+-runbundles: \
 	osgi.enterprise;version='[5,6)',\
 	org.apache.felix.http.servlet-api;version='[1.0.0, 1.1)',\
 	org.apache.felix.http.api;version='[2.3.0, 3)',\
@@ -30,7 +30,8 @@
 	org.amdatu.remote.topology.promiscuous;version=latest,\
 	org.inaetics.remote.admin.wiring;version=latest,\
 	org.inaetics.remote.demo.calculator.api;version=latest,\
-	org.inaetics.remote.demo.calculator.server;version=latest
+	org.inaetics.remote.demo.calculator.server;version=latest,\
+	org.inaetics.truststorage;version=latest
 
 
 -runproperties:  \
@@ -42,14 +43,15 @@
 	org.inaetics.wiring.discovery.etcd.rootpath=/inaetics/discovery,\
 	org.inaetics.wiring.admin.https.zone=zone1,\
 	org.inaetics.wiring.admin.https.node=node1,\
-	org.apache.felix.http.enable=false,\
+	org.apache.felix.http.enable=true,\
 	org.apache.felix.https.enable=true,\
+	org.osgi.service.http.port=8080,\
 	org.osgi.service.http.port.secure=8443,\
 	org.apache.felix.http.host=localhost,\
 	org.apache.felix.https.keystore="inaetics.keystore",\
-	org.apache.felix.https.keystore.password="changeme",\
-	org.apache.felix.https.keystore.key.password="changeme",\
+	org.apache.felix.https.keystore.password="changeit",\
+	org.apache.felix.https.keystore.key.password="changeit",\
 	org.apache.felix.https.truststore="inaetics.truststore",\
-	org.apache.felix.https.truststore.password="changeme",\
+	org.apache.felix.https.truststore.password="changeit",\
 	org.apache.felix.https.truststore.type="JKS"
 	

@@ -1,0 +1,15 @@
+# Example Project Template
+# Make sure to edit the name, category and help document.
+
+Export-Package: org.inaetics.truststorage
+-buildpath: \
+	osgi.core,\
+	org.apache.felix.http.jetty,\
+	org.apache.felix.http.servlet-api,\
+	org.apache.felix.dependencymanager,\
+	osgi.enterprise;version=5.0
+
+
+Bundle-Version: 1.0.0.${tstamp}
+Bundle-Activator: org.inaetics.truststorage.Activator
+
