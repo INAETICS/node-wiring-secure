@@ -10,7 +10,6 @@
 	${livetribe},\
 	${javax-jmdns},\
 	${slf4j},\
-	org.inaetics.truststorage;version=latest,\
-	org.inaetics.certificateservice;version=latest
+	org.inaetics.truststorage;version=latest
 
 -sub: *.bnd

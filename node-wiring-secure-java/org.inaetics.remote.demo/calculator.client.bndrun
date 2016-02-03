@@ -31,7 +31,7 @@
 	org.inaetics.remote.admin.wiring;version=latest,\
 	org.inaetics.remote.demo.calculator.api;version=latest,\
 	org.inaetics.remote.demo.calculator.client;version=latest,\
-	org.inaetics.truststorage;version=snapshot,\
+	org.inaetics.truststorage;version=latest
 
 -runproperties:  \
 	org.amdatu.remote.discovery.etcd.connecturl=http://docker:4001,\
@@ -58,3 +58,5 @@
 	org.apache.felix.https.truststore.password="changeit",\
 	org.apache.felix.https.truststore.type="JKS"
 	
+
+

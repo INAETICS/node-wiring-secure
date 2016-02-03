@@ -8,7 +8,6 @@ public class CaConfig {
     public static final String CA_INFO_URL = CaConfig.CA_BASE_URL + "info";
     public static final String CSR_BEGIN = "-----BEGIN CERTIFICATE REQUEST-----\n";
     public static final String CSR_END = "\n-----END CERTIFICATE REQUEST-----\n";
-    public static final String PRINCIPAL_STRING = "CN={CN}, L=Hengelo, ST=Overijssel, C=Netherlands";
-    public static final String PRINCIPAL_STRING_CN_SELECTER = "{CN}";
+    public static final String PRINCIPAL_STRING = "CN=Mike.org, L=Enschede, ST=Overijssel, C=Netherlands";
     public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
 }

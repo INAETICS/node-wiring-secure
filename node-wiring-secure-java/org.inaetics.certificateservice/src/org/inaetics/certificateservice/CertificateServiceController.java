@@ -49,8 +49,6 @@ public class CertificateServiceController {
 
 	private static CertificateServiceController _instance;
 	private volatile TrustStorageService trustStorage;
-	
-	private volatile String m_podCommonName;
 
 	private CertificateServiceController(TrustStorageService trustStorage) {
 		this.trustStorage = trustStorage;
@@ -162,7 +160,7 @@ public class CertificateServiceController {
 				switch (statusCode) {
 				case HttpURLConnection.HTTP_OK:
 					X509Certificate cert = parseCAResponse(connection.getInputStream());
-					if (cert != null && trustStorage != null) {
+					if (cert != null) {
 						System.out.println("cert fetched");
 						trustStorage.storeSignedKeyPair(cert, pair.getPrivate());
 
@@ -213,7 +211,7 @@ public class CertificateServiceController {
 			switch (statusCode) {
 			case HttpURLConnection.HTTP_OK:
 				X509Certificate caCert = parseCAResponse(connection.getInputStream());
-				if (caCert != null && trustStorage !=null) {
+				if (caCert != null) {
 					trustStorage.storeRootCaCert(caCert);
 					System.out.println("server cert fetched");
 				}
@@ -234,16 +232,11 @@ public class CertificateServiceController {
 		}
 
 	}
-	
-	private String aggregatePodPrincipalString() {
-		return CaConfig.PRINCIPAL_STRING.replace(
-				CaConfig.PRINCIPAL_STRING_CN_SELECTER, m_podCommonName);
-	}
 
 	private PKCS10CertificationRequest createCSR(KeyPair pair) throws OperatorCreationException {
 		PublicKey publicKey = pair.getPublic();
 		PrivateKey privateKey = pair.getPrivate();
-		X500Principal principal = new X500Principal(aggregatePodPrincipalString());
+		X500Principal principal = new X500Principal(CaConfig.PRINCIPAL_STRING);
 
 		PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(principal, publicKey);
 		JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder(CaConfig.SIGNATURE_ALGORITHM);
