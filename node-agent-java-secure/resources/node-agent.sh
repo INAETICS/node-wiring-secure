@@ -119,7 +119,6 @@ start_agent () {
   -Dorg.apache.felix.https.truststore="/inkeys/inaetics.truststore" \
   -Dorg.apache.felix.https.truststore.password="changeit" \
   -Dorg.apache.felix.https.truststore.type="JKS" \
-  -Dorg.apache.felix.https.clientcertificate="needs" \
     -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000"
     
   local props2=-Dgosh.args="--nointeractive --command telnetd --ip=0.0.0.0 start"
