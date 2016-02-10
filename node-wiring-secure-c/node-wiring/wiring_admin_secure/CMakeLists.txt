@@ -17,7 +17,7 @@ SET(BUNDLE_SYMBOLICNAME "apache_celix_wiring_admin")
 SET(BUNDLE_VERSION "0.0.1")
 SET(BUNDLE_NAME "apache_celix_wiring_admin")
 
-bundle(org.inaetics.wiring_admin.WiringAdmin SOURCES 
+bundle(org.inaetics.wiring_admin_secure.WiringAdmin SOURCES
 	private/src/wiring_admin_impl
 	private/src/wiring_admin_activator
 	${PROJECT_SOURCE_DIR}/wiring_common/private/src/civetweb.c
@@ -25,6 +25,6 @@ bundle(org.inaetics.wiring_admin.WiringAdmin SOURCES
    	${PROJECT_SOURCE_DIR}/wiring_common/private/src/wiring_endpoint_description.c
 )
 
-install_bundle(org.inaetics.wiring_admin.WiringAdmin)
+install_bundle(org.inaetics.wiring_admin_secure.WiringAdmin)
     
-target_link_libraries(org.inaetics.wiring_admin.WiringAdmin ${CELIX_FRAMEWORK_LIBRARY} ${CELIX_UTILS_LIBRARY} ${CURL_LIBRARIES})
+target_link_libraries(org.inaetics.wiring_admin_secure.WiringAdmin ${CELIX_FRAMEWORK_LIBRARY} ${CELIX_UTILS_LIBRARY} ${CURL_LIBRARIES})

@@ -129,7 +129,32 @@ celix_status_t wiringAdmin_startWebserver(bundle_context_pt context, wiring_admi
 
     do {
         char newPort[10];
-        const char *options[] = { "listening_ports", port, NULL };
+        // just for weird testing...
+        const char *options[] = {
+                "listening_ports", "6789,8889s",
+                "ssl_certificate", "/tmp/cinkeys/server.pem",
+                "ssl_verify_peer", "yes",
+//                "ssl_default_verify_paths", "no",
+                "ssl_ca_file", "/tmp/cinkeys/ca.pem",
+
+                //"listening_ports", port,
+
+                NULL };
+
+//        const char *options[] = {
+//                "listening_ports", "6789",
+////                "ssl_certificate", "/tmp/cinkeys/ca.pem",
+//                //"listening_ports", port,
+//
+//                NULL };
+
+
+
+//        const char *options[] = {
+//                "listening_ports", port,
+//
+//                NULL };
+
 
         (*admin)->ctx = mg_start(&callbacks, (*admin), options);
 

@@ -20,8 +20,8 @@
 
 //#define WIRING_ENDPOINT_DESCRIPTION_CONFIG_VALUE		"inaetics.wiring.http"
 
-#define WIRING_ADMIN_PROPERTIES_CONFIG_VALUE		"inaetics.wiring.http"
-#define WIRING_ADMIN_PROPERTIES_SECURE_VALUE 		"no"
+#define WIRING_ADMIN_PROPERTIES_CONFIG_VALUE		"inaetics.wiring.https"
+#define WIRING_ADMIN_PROPERTIES_SECURE_VALUE 		"yes"
 
 #define TAG                                         "WIRING_ADMIN"
 
