@@ -42,6 +42,8 @@ static const char *data_response_headers = "HTTP/1.1 200 OK\r\n"
         "Content-Type: application/json\r\n"
         "\r\n";
 
+static const char *default_tls_cert_key_type = "PEM";
+
 static const char *no_content_response_headers = "HTTP/1.1 204 OK\r\n";
 
 static int wiringAdmin_callback(struct mg_connection *conn);
@@ -533,6 +535,54 @@ celix_status_t wiringAdmin_removeImportedWiringEndpoint(wiring_admin_pt admin, w
     return status;
 }
 
+static const char *test_key = "-----BEGIN RSA PRIVATE KEY-----\n"
+        "MIIEowIBAAKCAQEAxPWBD6NYn4XU7kTD0qG4ojUfwlJW/5Xxvwc2KOJIZ0jC82PM\n"
+        "LTCRml5taEwpITJwPSLLNPrCFfxGx1LZXnM1YP2XJYiLmctWuN2QcF8ne+nA0Tqb\n"
+        "pSJnjs2bsSDgB5E5I1XPk63fsCGg2QBpD1/B0RT5mni/StuYXcJp5SauoEgBr2iN\n"
+        "X/GKQWiSbrocCM+lJTou89zTl2kY7kVZcA0EwCUSsKvZ/y2CEgfoxouYpbq8DJEE\n"
+        "oKcvt+1lwVHW7V/iqF/kJ4DSniH0UrdXJq/01Wmim03oEZh7nd57SNCmVW+OK9Yw\n"
+        "CrpfFsvNBx0hY5nIt0DTUoSczgAE+uBCAHxGxwIDAQABAoIBAAe4e/Op+opeS6d/\n"
+        "aJG0JzGslW8fnSttrElJthTKMf5iesnhqppG4h5D/1PsUFxtxrqOx5pvDfagqgGc\n"
+        "PMsYBwqjRi6BeL9xmherD8Nn53tTAWzyODGz9I1DgAvkdwO07KF29qkaUr9rwgtf\n"
+        "mb6xiT5x7QriGtWLYCCkw1PpPUUpG7Y3365JNBEeI4piw5Rgk/FYaYG2gSTvSsm8\n"
+        "vkU4oaFs4k6QIcri1HQu4ZIMn8cYcZYKNaB6B8r0CZhB+Q4iFO9Yfv+qimDY88dd\n"
+        "87jmZGR7MbCSqYzjZ2YngS0IcTGCtUfqiqp6TJeba8QXCgg+OGU2WU6b3m49li4a\n"
+        "nkhJtbECgYEAx8QezH95LzpqVnyqI+dfG12giCD2r+I1d/Imv9IUPp/DD3vFAeVi\n"
+        "HvVez5SQQvuyvE64M9lx/wYkuihuv/Rvi8+XLlgNXR7rVMOfmvpfbZ1QQkTmDiqe\n"
+        "3KLfE4I2Ii8dtfU2g1nU52M7mdKILz7OkcXVKBIoKCnkiR1r05oaKe8CgYEA/GcY\n"
+        "I1CWaiReh6CEwxpZSbZs0vTHXKnl1IAzuZuwiu3PJ9VLQW28tGy+2LqVAvufTIX2\n"
+        "vl/OOaogtLxOSBbR8HbJExD3fYemkS12fjSsecdvwWtljAVfbzFQ/EzFJMonUKCr\n"
+        "LQmwDGNYD2FYDDlL5fwCSZlUrdQ8ho7zcjIq6KkCgYEAo5WrbuTYNN+OIsK1hO88\n"
+        "B6nVAoST3hXMmSt3pc7/ewTS9APzoQjZH+bou+25cNCyXdfMqdDfs+mw+6yOfKxL\n"
+        "B993uqCqWN4v8dq8AWoT6SxQg+PtzB4Et0K8kDop4DZbCx0BhfBzEwRE00L++Elj\n"
+        "WSX61nR/49viZJHuMXpZAIsCgYAtW1ViGzw8bLa0Bqt06Ao9jdO2gRhGVZ2gdz1U\n"
+        "UF8ESEHetZylcFPl1FjjV3wpog/5T2WMxminwiPIdsJWgAtP+/icPYNMApFzK0lM\n"
+        "2qhX5ff2ORdxdxG0SJd2D1GqD83K1mSMXl5Ni5iqguKwp6c09/ltQmmOJ0KNJ6kl\n"
+        "z1AYqQKBgAwFKBJN5KoXP4g/nab4n+7lsiTqAYttW01ldDM5H9Fqk4qhRl6SC05D\n"
+        "hk4LMSQ2hg+f3Qp4IetDcVx4LRMiKOPhK7PEIQHtr/losf8Z/hKxI+4uqR2bm+BS\n"
+        "eQ5TMxmGUXAWUbXsuVk3lqTCWJxRDwJh+o1TTjSBiLmjCZQxLa9T\n"
+        "-----END RSA PRIVATE KEY-----";
+
+static const char *test_cert = "-----BEGIN CERTIFICATE-----\n"
+        "MIIDAjCCAeqgAwIBAgIILlaLUe+bESowDQYJKoZIhvcNAQELBQAwDTELMAkGA1UE\n"
+        "AxMCQ0EwHhcNMTUxMjA3MTAzOTAwWhcNMjAxMjA1MTAzOTAwWjANMQswCQYDVQQD\n"
+        "EwJDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMT1gQ+jWJ+F1O5E\n"
+        "w9KhuKI1H8JSVv+V8b8HNijiSGdIwvNjzC0wkZpebWhMKSEycD0iyzT6whX8RsdS\n"
+        "2V5zNWD9lyWIi5nLVrjdkHBfJ3vpwNE6m6UiZ47Nm7Eg4AeROSNVz5Ot37AhoNkA\n"
+        "aQ9fwdEU+Zp4v0rbmF3CaeUmrqBIAa9ojV/xikFokm66HAjPpSU6LvPc05dpGO5F\n"
+        "WXANBMAlErCr2f8tghIH6MaLmKW6vAyRBKCnL7ftZcFR1u1f4qhf5CeA0p4h9FK3\n"
+        "Vyav9NVpoptN6BGYe53ee0jQplVvjivWMAq6XxbLzQcdIWOZyLdA01KEnM4ABPrg\n"
+        "QgB8RscCAwEAAaNmMGQwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8C\n"
+        "AQIwHQYDVR0OBBYEFJQNG/dmiiqDwAdz7XxwULyrBx7mMB8GA1UdIwQYMBaAFJQN\n"
+        "G/dmiiqDwAdz7XxwULyrBx7mMA0GCSqGSIb3DQEBCwUAA4IBAQAkpzcYPqqZQylw\n"
+        "ASjvtUUocLzAmceY+ZzH4sq5pabIBzIDh2EAVfzNxQ/9XD8HCPcv6Dgzv4Xjlabs\n"
+        "J6d1InaGaUH0sUSsuRBMjrDjk30X9FfFnLfJkRFwXlvNor1T0ny3DCKw9vuGvXa5\n"
+        "Jg5SYBeqyBKliu1wEKTUfX6+CB+4kcilDuJ/N7Brt6VVE2O8r/pa3dhwTV94xAgl\n"
+        "eLoOg65BrgvDuU39TzKazSPadHgFLNh/n1vKrdMG7Dq8ESognYqsr7LCejVRWlGL\n"
+        "DEnDADj/KRqSWA9dxBElOMFC2dgu+haxQxIN8vV0UtSq6nibo1Q9i/M8QEcdPgp9\n"
+        "dnZDvTV2\n"
+        "-----END CERTIFICATE-----";
+
 static celix_status_t wiringAdmin_send(wiring_send_service_pt sendService, char *request, char **reply, int* replyStatus) {
 
     celix_status_t status = CELIX_SUCCESS;
@@ -558,6 +608,17 @@ static celix_status_t wiringAdmin_send(wiring_send_service_pt sendService, char 
 
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+        // TODO: configure this through certificate service
+        curl_easy_setopt(curl, CURLOPT_SSLCERT, test_cert);
+        curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, default_tls_cert_key_type);
+        curl_easy_setopt(curl, CURLOPT_SSLKEY, test_key);
+        curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, default_tls_cert_key_type);
+
+        // TODO: caution!! i disabled the name validation for debugging purposes! this is not good...
+        // this should be 2L
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
         curl_easy_setopt(curl, CURLOPT_READFUNCTION, wiringAdmin_HTTPReqReadCallback);
         curl_easy_setopt(curl, CURLOPT_READDATA, &post);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, wiringAdmin_HTTPReqWrite);
