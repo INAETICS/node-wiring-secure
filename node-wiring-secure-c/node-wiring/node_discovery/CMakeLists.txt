@@ -8,8 +8,8 @@ find_package(Jansson REQUIRED)
 include_directories("${CURL_INCLUDE_DIR}")
 include_directories("${JANSSON_INCLUDE_DIR}")
 include_directories("${CELIX_INCLUDE_DIRS}/remote_service_admin")
-include_directories("${PROJECT_SOURCE_DIR}/wiring_common/public/include")
-include_directories("${PROJECT_SOURCE_DIR}/wiring_common/private/include")
+include_directories("${PROJECT_SOURCE_DIR}/wiring_common_secure/public/include")
+include_directories("${PROJECT_SOURCE_DIR}/wiring_common_secure/private/include")
 include_directories("private/include")
 include_directories("public/include")
 
@@ -27,7 +27,7 @@ bundle(org.inaetics.node_discovery.etcd.NodeDiscovery SOURCES
 	private/src/node_description.c
 	private/src/wiring_endpoint_reader.c
 	private/src/wiring_endpoint_writer.c
-   ${PROJECT_SOURCE_DIR}/wiring_common/private/src/wiring_endpoint_description.c
+   ${PROJECT_SOURCE_DIR}/wiring_common_secure/private/src/wiring_endpoint_description.c
 )
 
 install_bundle(org.inaetics.node_discovery.etcd.NodeDiscovery)

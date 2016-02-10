@@ -10,7 +10,7 @@
 #include "remote_constants.h"
 
 #define WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY			"org.inaetics.remote.admin.wiring.wireId"
-#define WIRING_ENDPOINT_DESCRIPTION_HTTP_URL_KEY		"inaetics.wiring.http.url"
+#define WIRING_ENDPOINT_DESCRIPTION_HTTP_URL_KEY		"inaetics.wiring.https.url"
 
 
 struct wiring_endpoint_description {

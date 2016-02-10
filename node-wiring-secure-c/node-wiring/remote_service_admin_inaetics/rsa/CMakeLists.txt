@@ -19,8 +19,8 @@ include_directories(
 	${CELIX_INCLUDE_DIR}/remote_service_admin
 	${CELIX_INCLUDE_DIR}/dfi
 	${PROJECT_SOURCE_DIR}/remote_service_admin/private/include
-	${PROJECT_SOURCE_DIR}/wiring_common/private/include
-	${PROJECT_SOURCE_DIR}/wiring_common/public/include
+	${PROJECT_SOURCE_DIR}/wiring_common_secure/private/include
+	${PROJECT_SOURCE_DIR}/wiring_common_secure/public/include
 	private/include
 	public/include
 	../dynamic_function_interface
@@ -43,7 +43,7 @@ bundle(org.inaetics.remote_service_admin SOURCES
     ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/export_registration_dfi
     ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/import_registration_dfi
 	${CELIX_DIR}/share/celix/log_service/log_helper
-	${PROJECT_SOURCE_DIR}/wiring_common/private/src/civetweb.c
+	${PROJECT_SOURCE_DIR}/wiring_common_secure/private/src/civetweb.c
 )
 
 install_bundle(org.inaetics.remote_service_admin)

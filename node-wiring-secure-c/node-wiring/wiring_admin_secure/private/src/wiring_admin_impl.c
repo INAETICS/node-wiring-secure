@@ -413,6 +413,7 @@ celix_status_t wiringAdmin_exportWiringEndpoint(wiring_admin_pt admin, wiring_en
             status = wiringEndpointDescription_create(NULL, props, wEndpointDescription);
 
             properties_set(props, WIRING_ADMIN_PROPERTIES_CONFIG_KEY, WIRING_ADMIN_PROPERTIES_CONFIG_VALUE);
+            properties_set(props, WIRING_ADMIN_PROPERTIES_SECURE_KEY, WIRING_ADMIN_PROPERTIES_SECURE_VALUE);
             properties_set(props, WIRING_ENDPOINT_DESCRIPTION_HTTP_URL_KEY, admin->url);
             properties_set(props, (char*) OSGI_RSA_ENDPOINT_FRAMEWORK_UUID, fwuuid);
 

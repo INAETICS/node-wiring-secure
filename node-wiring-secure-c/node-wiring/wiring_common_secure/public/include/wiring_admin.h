@@ -9,7 +9,7 @@
 
 #include "celix_errno.h"
 
-static const char * const INAETICS_WIRING_ADMIN = "wiring_admin";
+static const char * const INAETICS_WIRING_ADMIN = "wiring_admin_secure";
 
 static const char * const INAETICS_WIRING_ADMIN_SCOPE = "wiring.admin.scope";
 
