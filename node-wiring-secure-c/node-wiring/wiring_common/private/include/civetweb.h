@@ -23,7 +23,7 @@
 #ifndef CIVETWEB_HEADER_INCLUDED
 #define CIVETWEB_HEADER_INCLUDED
 
-#define CIVETWEB_VERSION "1.7"
+#define CIVETWEB_VERSION "1.8"
 
 #ifndef CIVETWEB_API
 #if defined(_WIN32)
@@ -35,7 +35,7 @@
 #define CIVETWEB_API
 #endif
 #elif __GNUC__ >= 4
-#define CIVETWEB_API __attribute__((visibility ("default")))
+#define CIVETWEB_API __attribute__((visibility("default")))
 #else
 #define CIVETWEB_API
 #endif
@@ -54,15 +54,23 @@ struct mg_connection; /* Handle for the individual connection */
 /* This structure contains information about the HTTP request. */
 struct mg_request_info {
 	const char *request_method; /* "GET", "POST", etc */
-	const char *uri;            /* URL-decoded URI */
+	const char *request_uri;    /* URL-decoded URI (absolute or relative,
+	                             * as in the request) */
+	const char *local_uri;      /* URL-decoded URI (relative). Can be NULL
+	                             * if the request_uri does not address a
+	                             * resource at the server host. */
+	const char *uri;            /* Deprecated: use local_uri instead */
 	const char *http_version;   /* E.g. "1.0", "1.1" */
 	const char *query_string;   /* URL part after '?', not including '?', or
 	                               NULL */
 	const char *remote_user;    /* Authenticated user, or NULL if no auth
 	                               used */
 	char remote_addr[48];       /* Client's IP address as a string. */
+
+#if defined(MG_LEGACY_INTERFACE)
 	long remote_ip; /* Client's IP address. Deprecated: use remote_addr instead
 	                   */
+#endif
 
 	long long content_length; /* Length (in bytes) of the request body,
 	                             can be -1 if no length was given. */
@@ -80,7 +88,7 @@ struct mg_request_info {
 
 /* This structure needs to be passed to mg_start(), to let civetweb know
    which callbacks to invoke. For a detailed description, see
-   https://github.com/bel2125/civetweb/blob/master/docs/UserManual.md */
+   https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md */
 struct mg_callbacks {
 	/* Called when civetweb has received new HTTP request.
 	   If the callback returns one, it must process the request
@@ -92,8 +100,10 @@ struct mg_callbacks {
 	   Return value:
 	     0: civetweb will process the request itself. In this case,
 	        the callback must not send any data to the client.
-	     1: callback already processed the request. Civetweb will
-	        not send any data after the callback returned. */
+	     1-999: callback already processed the request. Civetweb will
+	            not send any data after the callback returned. The
+	            return code is stored as a HTTP status code for the
+	            access log. */
 	int (*begin_request)(struct mg_connection *);
 
 	/* Called when civetweb has finished processing request. */
@@ -116,6 +126,7 @@ struct mg_callbacks {
 	    -1: initializing ssl fails. */
 	int (*init_ssl)(void *ssl_context, void *user_data);
 
+#if defined(MG_LEGACY_INTERFACE)
 	/* Called when websocket request is received, before websocket handshake.
 	   Return value:
 	     0: civetweb proceeds with websocket handshake.
@@ -137,8 +148,11 @@ struct mg_callbacks {
 	     1: keep this websocket connection open.
 	     0: close this websocket connection.
 	   This callback is deprecated, use mg_set_websocket_handler instead. */
-	int (*websocket_data)(struct mg_connection *, int bits, char *data,
+	int (*websocket_data)(struct mg_connection *,
+	                      int bits,
+	                      char *data,
 	                      size_t data_len);
+#endif /* MG_LEGACY_INTERFACE */
 
 	/* Called when civetweb is closing a connection.  The per-context mutex is
 	   locked when this is invoked.  This is primarily useful for noting when
@@ -158,7 +172,8 @@ struct mg_callbacks {
 	     NULL: do not serve file from memory, proceed with normal file open.
 	     non-NULL: pointer to the file contents in memory. data_len must be
 	       initilized with the size of the memory block. */
-	const char *(*open_file)(const struct mg_connection *, const char *path,
+	const char *(*open_file)(const struct mg_connection *,
+	                         const char *path,
 	                         size_t *data_len);
 
 	/* Called when civetweb is about to serve Lua server page, if
@@ -214,7 +229,7 @@ struct mg_callbacks {
      };
      struct mg_context *ctx = mg_start(&my_func, NULL, options);
 
-   Refer to https://github.com/bel2125/civetweb/blob/master/docs/UserManual.md
+   Refer to https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md
    for the list of valid option and their possible values.
 
    Return:
@@ -240,7 +255,8 @@ CIVETWEB_API void mg_stop(struct mg_context *);
       cbdata: the callback data configured with mg_set_request_handler().
    Returns:
       0: the handler could not handle the request, so fall through.
-      1: the handler processed the request. */
+      1 - 999: the handler processed the request. The return code is
+               stored as a HTTP status code for the access log. */
 typedef int (*mg_request_handler)(struct mg_connection *conn, void *cbdata);
 
 /* mg_set_request_handler
@@ -297,8 +313,11 @@ CIVETWEB_API void mg_set_request_handler(struct mg_context *ctx,
 typedef int (*mg_websocket_connect_handler)(const struct mg_connection *,
                                             void *);
 typedef void (*mg_websocket_ready_handler)(struct mg_connection *, void *);
-typedef int (*mg_websocket_data_handler)(struct mg_connection *, int, char *,
-                                         size_t, void *);
+typedef int (*mg_websocket_data_handler)(struct mg_connection *,
+                                         int,
+                                         char *,
+                                         size_t,
+                                         void *);
 typedef void (*mg_websocket_close_handler)(const struct mg_connection *,
                                            void *);
 
@@ -307,12 +326,36 @@ typedef void (*mg_websocket_close_handler)(const struct mg_connection *,
    Set or remove handler functions for websocket connections.
    This function works similar to mg_set_request_handler - see there. */
 CIVETWEB_API void
-mg_set_websocket_handler(struct mg_context *ctx, const char *uri,
+mg_set_websocket_handler(struct mg_context *ctx,
+                         const char *uri,
                          mg_websocket_connect_handler connect_handler,
                          mg_websocket_ready_handler ready_handler,
                          mg_websocket_data_handler data_handler,
                          mg_websocket_close_handler close_handler,
                          void *cbdata);
+
+/* mg_authorization_handler
+
+   Some description here
+
+   Parameters:
+      conn: current connection information.
+      cbdata: the callback data configured with mg_set_request_handler().
+   Returns:
+      0: access denied
+      1: access granted
+ */
+typedef int (*mg_authorization_handler)(struct mg_connection *conn,
+                                        void *cbdata);
+
+/* mg_set_auth_handler
+
+   Sets or removes a URI mapping for an authorization handler.
+   This function works similar to mg_set_request_handler - see there. */
+CIVETWEB_API void mg_set_auth_handler(struct mg_context *ctx,
+                                      const char *uri,
+                                      mg_authorization_handler handler,
+                                      void *cbdata);
 
 /* Get the value of particular configuration parameter.
    The value returned is read-only. Civetweb does not allow changing
@@ -368,13 +411,27 @@ enum {
    The array is terminated by a NULL name option. */
 CIVETWEB_API const struct mg_option *mg_get_valid_options(void);
 
+struct mg_server_ports {
+	int protocol;    /* 1 = IPv4, 2 = IPv6, 3 = both */
+	int port;        /* port number */
+	int is_ssl;      /* https port: 0 = no, 1 = yes */
+	int is_redirect; /* redirect all requests: 0 = no, 1 = yes */
+	int _reserved1;
+	int _reserved2;
+	int _reserved3;
+	int _reserved4;
+};
+
 /* Get the list of ports that civetweb is listening on.
-   size is the size of the ports int array and ssl int array to fill.
-   It is the caller's responsibility to make sure ports and ssl each
-   contain at least size int elements worth of memory to write into.
-   Return value is the number of ports and ssl information filled in.
-   The value returned is read-only. Civetweb does not allow changing
-   configuration at run time. */
+   The parameter size is the size of the ports array in elements.
+   The caller is responsibility to allocate the required memory.
+   This function returns the number of struct mg_server_ports elements
+   filled in, or <0 in case of an error. */
+CIVETWEB_API int mg_get_server_ports(const struct mg_context *ctx,
+                                     int size,
+                                     struct mg_server_ports *ports);
+
+/* Deprecated. Use mg_get_server_ports instead. */
 CIVETWEB_API size_t
 mg_get_ports(const struct mg_context *ctx, size_t size, int *ports, int *ssl);
 
@@ -391,7 +448,8 @@ mg_get_ports(const struct mg_context *ctx, size_t size, int *ports, int *ssl);
    Return:
      1 on success, 0 on error. */
 CIVETWEB_API int mg_modify_passwords_file(const char *passwords_file_name,
-                                          const char *domain, const char *user,
+                                          const char *domain,
+                                          const char *user,
                                           const char *password);
 
 /* Return information associated with the request. */
@@ -417,8 +475,27 @@ CIVETWEB_API int mg_write(struct mg_connection *, const void *buf, size_t len);
     0   when the connection has been closed
     -1  on error
     >0  number of bytes written on success */
-CIVETWEB_API int mg_websocket_write(struct mg_connection *conn, int opcode,
-                                    const char *data, size_t data_len);
+CIVETWEB_API int mg_websocket_write(struct mg_connection *conn,
+                                    int opcode,
+                                    const char *data,
+                                    size_t data_len);
+
+/* Send data to a websocket server wrapped in a masked websocket frame.  Uses
+   mg_lock_connection to ensure that the transmission is not interrupted,
+   i.e., when the application is proactively communicating and responding to
+   a request simultaneously.
+
+   Send data to a websocket server wrapped in a masked websocket frame.
+   This function is available when civetweb is compiled with -DUSE_WEBSOCKET
+
+   Return:
+    0   when the connection has been closed
+    -1  on error
+    >0  number of bytes written on success */
+CIVETWEB_API int mg_websocket_client_write(struct mg_connection *conn,
+                                           int opcode,
+                                           const char *data,
+                                           size_t data_len);
 
 /* Blocks until unique access is obtained to this connection. Intended for use
    with websockets only.
@@ -470,8 +547,8 @@ enum {
 /* Send data to the client using printf() semantics.
    Works exactly like mg_write(), but allows to do message formatting. */
 CIVETWEB_API int mg_printf(struct mg_connection *,
-                           PRINTF_FORMAT_STRING(const char *fmt), ...)
-    PRINTF_ARGS(2, 3);
+                           PRINTF_FORMAT_STRING(const char *fmt),
+                           ...) PRINTF_ARGS(2, 3);
 
 /* Send contents of the entire file together with HTTP headers. */
 CIVETWEB_API void mg_send_file(struct mg_connection *conn, const char *path);
@@ -510,8 +587,11 @@ CIVETWEB_API const char *mg_get_header(const struct mg_connection *,
 
    Destination buffer is guaranteed to be '\0' - terminated if it is not
    NULL or zero length. */
-CIVETWEB_API int mg_get_var(const char *data, size_t data_len,
-                            const char *var_name, char *dst, size_t dst_len);
+CIVETWEB_API int mg_get_var(const char *data,
+                            size_t data_len,
+                            const char *var_name,
+                            char *dst,
+                            size_t dst_len);
 
 /* Get a value of particular form variable.
 
@@ -536,8 +616,11 @@ CIVETWEB_API int mg_get_var(const char *data, size_t data_len,
 
    Destination buffer is guaranteed to be '\0' - terminated if it is not
    NULL or zero length. */
-CIVETWEB_API int mg_get_var2(const char *data, size_t data_len,
-                             const char *var_name, char *dst, size_t dst_len,
+CIVETWEB_API int mg_get_var2(const char *data,
+                             size_t data_len,
+                             const char *var_name,
+                             char *dst,
+                             size_t dst_len,
                              size_t occurrence);
 
 /* Fetch value of certain cookie variable into the destination buffer.
@@ -553,8 +636,10 @@ CIVETWEB_API int mg_get_var2(const char *data, size_t data_len,
             parameter is not found).
         -2 (destination buffer is NULL, zero length or too small to hold the
             value). */
-CIVETWEB_API int mg_get_cookie(const char *cookie, const char *var_name,
-                               char *buf, size_t buf_len);
+CIVETWEB_API int mg_get_cookie(const char *cookie,
+                               const char *var_name,
+                               char *buf,
+                               size_t buf_len);
 
 /* Download data from the remote web server.
      host: host name to connect to, e.g. "foo.com", or "10.12.40.1".
@@ -572,10 +657,13 @@ CIVETWEB_API int mg_get_cookie(const char *cookie, const char *var_name,
                         "%s", "GET / HTTP/1.0\r\nHost: google.com\r\n\r\n");
  */
 CIVETWEB_API struct mg_connection *
-mg_download(const char *host, int port, int use_ssl, char *error_buffer,
+mg_download(const char *host,
+            int port,
+            int use_ssl,
+            char *error_buffer,
             size_t error_buffer_size,
-            PRINTF_FORMAT_STRING(const char *request_fmt), ...)
-    PRINTF_ARGS(6, 7);
+            PRINTF_FORMAT_STRING(const char *request_fmt),
+            ...) PRINTF_ARGS(6, 7);
 
 /* Close the connection opened by mg_download(). */
 CIVETWEB_API void mg_close_connection(struct mg_connection *conn);
@@ -604,8 +692,11 @@ CIVETWEB_API const char *mg_version(void);
    uses '+' as character for space, see RFC 1866 section 8.2.1
    http://ftp.ics.uci.edu/pub/ietf/html/rfc1866.txt
    Return: length of the decoded data, or -1 if dst buffer is too small. */
-CIVETWEB_API int mg_url_decode(const char *src, int src_len, char *dst,
-                               int dst_len, int is_form_url_encoded);
+CIVETWEB_API int mg_url_decode(const char *src,
+                               int src_len,
+                               char *dst,
+                               int dst_len,
+                               int is_form_url_encoded);
 
 /* URL-encode input buffer into destination buffer.
    returns the length of the resulting buffer or -1
@@ -628,8 +719,8 @@ CIVETWEB_API char *mg_md5(char buf[33], ...);
    Example:
      mg_cry(conn,"i like %s", "logging"); */
 CIVETWEB_API void mg_cry(const struct mg_connection *conn,
-                         PRINTF_FORMAT_STRING(const char *fmt), ...)
-    PRINTF_ARGS(2, 3);
+                         PRINTF_FORMAT_STRING(const char *fmt),
+                         ...) PRINTF_ARGS(2, 3);
 
 /* utility method to compare two buffers, case incensitive. */
 CIVETWEB_API int mg_strncasecmp(const char *s1, const char *s2, size_t len);
@@ -653,11 +744,17 @@ CIVETWEB_API int mg_strncasecmp(const char *s1, const char *s2, size_t len);
      On error, NULL. Se error_buffer for details.
 */
 
-CIVETWEB_API struct mg_connection *mg_connect_websocket_client(
-    const char *host, int port, int use_ssl, char *error_buffer,
-    size_t error_buffer_size, const char *path, const char *origin,
-    mg_websocket_data_handler data_func, mg_websocket_close_handler close_func,
-    void *user_data);
+CIVETWEB_API struct mg_connection *
+mg_connect_websocket_client(const char *host,
+                            int port,
+                            int use_ssl,
+                            char *error_buffer,
+                            size_t error_buffer_size,
+                            const char *path,
+                            const char *origin,
+                            mg_websocket_data_handler data_func,
+                            mg_websocket_close_handler close_func,
+                            void *user_data);
 
 /* Connect to a TCP server as a client (can be used to connect to a HTTP server)
    Parameters:
@@ -671,10 +768,26 @@ CIVETWEB_API struct mg_connection *mg_connect_websocket_client(
      On success, valid mg_connection object.
      On error, NULL. Se error_buffer for details.
 */
-CIVETWEB_API struct mg_connection *mg_connect_client(const char *host, int port,
+CIVETWEB_API struct mg_connection *mg_connect_client(const char *host,
+                                                     int port,
                                                      int use_ssl,
                                                      char *error_buffer,
                                                      size_t error_buffer_size);
+
+
+struct mg_client_options {
+	const char *host;
+	int port;
+	const char *client_cert;
+	const char *server_cert;
+	/* TODO: add more data */
+};
+
+CIVETWEB_API struct mg_connection *
+mg_connect_client_secure(const struct mg_client_options *client_options,
+                         char *error_buffer,
+                         size_t error_buffer_size);
+
 
 enum { TIMEOUT_INFINITE = -1 };
 
@@ -689,8 +802,28 @@ enum { TIMEOUT_INFINITE = -1 };
      On success, >= 0
      On error/timeout, < 0
 */
-CIVETWEB_API int mg_get_response(struct mg_connection *conn, char *ebuf,
-                                 size_t ebuf_len, int timeout);
+CIVETWEB_API int mg_get_response(struct mg_connection *conn,
+                                 char *ebuf,
+                                 size_t ebuf_len,
+                                 int timeout);
+
+/* Check which features where set when civetweb has been compiled.
+   Parameters:
+     feature: specifies which feature should be checked
+         1  serve files (NO_FILES not set)
+         2  support HTTPS (NO_SSL not set)
+         4  support CGI (NO_CGI not set)
+         8  support IPv6 (USE_IPV6 set)
+        16  support WebSocket (USE_WEBSOCKET set)
+        32  support Lua scripts and Lua server pages (USE_LUA is set)
+        64  support server side JavaScript (USE_DUKTAPE is set)
+        The result is undefined for all other feature values.
+
+   Return:
+     If feature is available > 0
+     If feature is not available = 0
+*/
+CIVETWEB_API unsigned mg_check_feature(unsigned feature);
 
 #ifdef __cplusplus
 }
