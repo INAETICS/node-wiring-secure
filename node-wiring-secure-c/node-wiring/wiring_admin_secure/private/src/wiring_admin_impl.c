@@ -128,33 +128,18 @@ celix_status_t wiringAdmin_startWebserver(bundle_context_pt context, wiring_admi
     callbacks.begin_request = wiringAdmin_callback;
 
     do {
+        // secure port for civetweb config
+        char securePort[10];
+        snprintf(&securePort[0], 6, "%ss", port);
         char newPort[10];
-        // just for weird testing...
+
         const char *options[] = {
-                "listening_ports", "6789,8889s",
+                "listening_ports", securePort,
                 "ssl_certificate", "/tmp/cinkeys/server.pem",
                 "ssl_verify_peer", "yes",
 //                "ssl_default_verify_paths", "no",
                 "ssl_ca_file", "/tmp/cinkeys/ca.pem",
-
-                //"listening_ports", port,
-
                 NULL };
-
-//        const char *options[] = {
-//                "listening_ports", "6789",
-////                "ssl_certificate", "/tmp/cinkeys/ca.pem",
-//                //"listening_ports", port,
-//
-//                NULL };
-
-
-
-//        const char *options[] = {
-//                "listening_ports", port,
-//
-//                NULL };
-
 
         (*admin)->ctx = mg_start(&callbacks, (*admin), options);
 
@@ -177,10 +162,10 @@ celix_status_t wiringAdmin_startWebserver(bundle_context_pt context, wiring_admi
     } while (((*admin)->ctx == NULL) && (port_counter < MAX_NUMBER_OF_RESTARTS));
 
     if (ip != NULL) {
-        snprintf((*admin)->url, MAX_URL_LENGTH, "http://%s:%s", ip, port);
+        snprintf((*admin)->url, MAX_URL_LENGTH, "https://%s:%s", ip, port);
     } else {
         printf("%s: No IP address for HTTP Wiring Endpint set. Using %s\n", TAG, DEFAULT_WA_ADDRESS);
-        snprintf((*admin)->url, MAX_URL_LENGTH, "http://%s:%s", (char*) DEFAULT_WA_ADDRESS, port);
+        snprintf((*admin)->url, MAX_URL_LENGTH, "https://%s:%s", (char*) DEFAULT_WA_ADDRESS, port);
     }
 
     if (detectedIp != NULL) {
