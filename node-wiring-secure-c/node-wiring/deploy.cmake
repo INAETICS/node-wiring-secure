@@ -32,26 +32,27 @@ set_property(TARGET discovery_etcd PROPERTY IMPORTED_LOCATION "${CELIX_BUNDLES_D
 #set_property(TARGET calculator PROPERTY IMPORTED_LOCATION "${CELIX_BUNDLES_DIR}/calculator.zip")
 
 deploy("wiring_rsa_client" BUNDLES
-   shell
-   shell_tui
-   topology_manager
-   discovery_etcd
-#   calculator_shell
-   org.inaetics.node_discovery.etcd.NodeDiscovery
-   org.inaetics.wiring_topology_manager.WiringTopologyManager
-   org.inaetics.wiring_admin_secure.WiringAdmin
-   org.inaetics.remote_service_admin
-)
+        shell
+        shell_tui
+        topology_manager
+        discovery_etcd
+        #   calculator_shell
+        org.inaetics.node_discovery.etcd.NodeDiscovery
+        org.inaetics.wiring_topology_manager.WiringTopologyManager
+        org.inaetics.wiring_admin_secure.WiringAdmin
+        org.inaetics.remote_service_admin
+        inaetics_trust_manager
+        )
 
 deploy("wiring_rsa_server" BUNDLES
-   shell
-   shell_tui
-   topology_manager
-   discovery_etcd
-#   calculator
-   org.inaetics.node_discovery.etcd.NodeDiscovery
-   org.inaetics.wiring_topology_manager.WiringTopologyManager
-   org.inaetics.wiring_admin_secure.WiringAdmin
-   org.inaetics.remote_service_admin
-)
+        shell
+        shell_tui
+        topology_manager
+        discovery_etcd
+        #   calculator
+        org.inaetics.node_discovery.etcd.NodeDiscovery
+        org.inaetics.wiring_topology_manager.WiringTopologyManager
+        org.inaetics.wiring_admin_secure.WiringAdmin
+        org.inaetics.remote_service_admin
+        )
 

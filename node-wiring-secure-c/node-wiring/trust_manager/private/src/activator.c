@@ -11,8 +11,11 @@
 
 #include "bundle_activator.h"
 #include "trust_manager_impl.h"
+#include "trust_manager_worker.h"
 
 struct trust_managerActivator {
+    trust_worker_pt trust_worker;
+
 	service_registration_pt reg;
 	trust_manager_service_pt trust_managerService;
 };
@@ -45,6 +48,9 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
 			act->trust_managerService->instance->name = TRUST_MANAGER_SERVICE_NAME;
 			act->trust_managerService->trust_manager_getCertificate = trust_manager_getCertificate;
 
+			// run the worker thread
+			trustWorker_create(context, &act->trust_worker);
+
 			status = bundleContext_registerService(context, TRUST_MANAGER_SERVICE_NAME, act->trust_managerService, NULL, &act->reg);
 		} else {
 			status = CELIX_ENOMEM;
@@ -59,6 +65,8 @@ celix_status_t bundleActivator_stop(void * userData, bundle_context_pt  __attrib
 	celix_status_t status = CELIX_SUCCESS;
 
 	trust_manager_activator_pt act = (trust_manager_activator_pt) userData;
+
+    trustWorker_destroy(act->trust_worker);
 
 	serviceRegistration_unregister(act->reg);
 	act->reg = NULL;

@@ -17,7 +17,6 @@ add_subdirectory(wiring_topology_manager)
 add_subdirectory(node_discovery)
 add_subdirectory(wiring_admin_secure)
 add_subdirectory(remote_service_admin_inaetics)
-
-
+add_subdirectory(trust_manager)
 
 deploy_targets()
