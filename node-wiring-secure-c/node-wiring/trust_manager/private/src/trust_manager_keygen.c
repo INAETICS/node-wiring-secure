@@ -67,9 +67,9 @@ int generate_keypair (mbedtls_pk_context* key)
 //    const mbedtls_ecp_curve_info *curve_info;
 //#endif
 
-    opt.filename            = "keyfile.key";
+//    opt.filename            = "keyfile.key";
     opt.debug_level         = 0;
-    opt.output_file         = "cert.req";
+//    opt.output_file         = "cert.req";
     opt.subject_name        = "CN=Cert,O=INAETICS,C=NL";
     opt.key_usage           = MBEDTLS_X509_KU_KEY_ENCIPHERMENT;
     opt.ns_cert_type        = MBEDTLS_X509_NS_CERT_TYPE_SSL_CLIENT;
@@ -122,18 +122,8 @@ int generate_keypair (mbedtls_pk_context* key)
     return ret;
 }
 
-void removeChar(char *str, char garbage) {
-
-    char *src, *dst;
-    for (src = dst = str; *src != '\0'; src++) {
-        *dst = *src;
-        if (*dst != garbage) dst++;
-    }
-    *dst = '\0';
-}
-
 /**
- * Public key in standard pem char[] representation
+ * Public key in standard pem char[] representation. Returns 0 on success.
  */
 int get_public_key(mbedtls_pk_context* key, char* key_pair)
 {
@@ -151,7 +141,7 @@ int get_public_key(mbedtls_pk_context* key, char* key_pair)
 }
 
 /**
- * private key in standard pem char[] representation
+ * private key in standard pem char[] representation. Returns 0 on success.
  */
 int get_private_key(mbedtls_pk_context* key, char* private_key)
 {
@@ -168,8 +158,18 @@ int get_private_key(mbedtls_pk_context* key, char* private_key)
     return ret;
 }
 
+void removeChar(char *str, char garbage) {
+
+    char *src, *dst;
+    for (src = dst = str; *src != '\0'; src++) {
+        *dst = *src;
+        if (*dst != garbage) dst++;
+    }
+    *dst = '\0';
+}
+
 /**
- * Takes the key and writes the csr. Returns 0 on success.
+ * Writes a cfssl api compatible json csr. Returns 0 on success.
  */
 int generate_csr(mbedtls_pk_context* key, char* csr)
 {
