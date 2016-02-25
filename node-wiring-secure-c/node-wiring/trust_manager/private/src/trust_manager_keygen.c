@@ -101,8 +101,8 @@ int generate_keypair (mbedtls_pk_context* key)
     }
 
     int t1 = mbedtls_rsa_check_pub_priv( rsa, rsa );
-    if ( t1 == 0 ) {
-        printf( "\n\nkeys are tested correctly\n\n");
+    if ( t1 != 0 ) {
+        return t1;
     }
 
     // set rsa parms into key config
@@ -169,6 +169,22 @@ void removeChar(char *str, char garbage) {
 }
 
 /**
+ * Write pem to file.
+ */
+int write_pem_to_file(char* pem, char filename[])
+{
+    // Open a file for writing.
+    // (This will replace any existing file. Use "w+" for appending)
+    FILE *file = fopen(filename, "w");
+
+    int results = fputs(pem, file);
+    if (results == EOF) {
+    // Failed to write do error code here.
+    }
+    fclose(file);
+}
+
+/**
  * Writes a cfssl api compatible json csr. Returns 0 on success.
  */
 int generate_csr(mbedtls_pk_context* key, char* csr)
@@ -196,15 +212,9 @@ int generate_csr(mbedtls_pk_context* key, char* csr)
     strncpy((char *) temp_csr, (const char*) &buffer_csr[36], 923);
     removeChar((char *) temp_csr, '\n');
     sprintf((char *) csr_body, "-----BEGIN CERTIFICATE REQUEST-----\\n%s\\n-----END CERTIFICATE REQUEST-----", (char*) temp_csr);
-
     sprintf(csr, "{\"certificate_request\":\"%s\"}", (char *) csr_body);
 
-    printf("\n\n*** CSR ***\n%s\n", csr);
-    fflush(stdout);
-
     mbedtls_x509write_csr_free( &req );
-    mbedtls_pk_free( key );
     mbedtls_ctr_drbg_free( &ctr_drbg );
-
     return res;
 }
