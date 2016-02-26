@@ -14,10 +14,6 @@
 #include "trust_manager_keygen.h"
 #include "trust_manager_storage.h"
 
-#define CA_CERT "/tmp/cinkeys/ca.pem"
-#define PRIVATE_KEY "/tmp/cinkeys/client_priv.key"
-#define PUBLIC_KEY "/tmp/cinkeys/client_pub.key"
-
 #define DEFAULT_WORKER_SLEEP 1
 
 struct trust_worker {
@@ -33,20 +29,25 @@ static int trustWorker_rekey(void) {
     generate_keypair(key);
 
     char *cert_path = malloc(1024);
+    char *ca_cert_path = malloc(1024);
+    char *pubkey_path = malloc(1024);
+    char *privkey_path = malloc(1024);
     char *pubkey = malloc(4096);
     char *privkey = malloc(4096);
     char* cert = malloc(4096);
 
+    get_next_public_key_file_path(pubkey_path);
     res = get_public_key(key, pubkey);
     if (!res) {
-        write_pem_to_file(pubkey, PUBLIC_KEY);
+        write_pem_to_file(pubkey, pubkey_path);
     } else {
         goto fail;
     }
 
+    get_next_private_key_file_path(privkey_path);
     res = get_private_key(key, privkey);
     if (!res) {
-        write_pem_to_file(privkey, PRIVATE_KEY);
+        write_pem_to_file(privkey, privkey_path);
     } else {
         goto fail;
     }
@@ -64,6 +65,9 @@ static int trustWorker_rekey(void) {
 
     fail:
     free(cert);
+    free(pubkey_path);
+    free(privkey_path);
+    free(ca_cert_path);
     free(cert_path);
     free(pubkey);
     free(privkey);
@@ -90,7 +94,7 @@ static void* trustWorker_run(void* data) {
         }
 
         char *cert_filename = malloc(1024);
-        ret = get_most_recent_certificate(cert_filename);
+        ret = get_recent_certificate(cert_filename);
         ret += load_certificate(cert, cert_filename);
 
         // verify cert
