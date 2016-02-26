@@ -19,12 +19,25 @@ struct string {
     size_t len;
 };
 
-void init_string(struct string *s);
-size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s);
-
+/**
+ * Prints the info of a certificate.
+ */
 void print_certificate_info(mbedtls_x509_crt *certificate);
+
+/**
+ * Verifies validaty of a certificate.
+ */
 int verify_certificate(mbedtls_x509_crt *certificate, mbedtls_x509_crt *ca_cert, int backdate_threshold);
-int request_certificate(mbedtls_pk_context* key, char* certificate);
+
+/**
+ * Request the ca certificate.
+ */
+int request_ca_certificate(char *ca_certificate);
+
+/**
+ * Perform CSR and retreive certificate.
+ */
+int csr_get_certificate(mbedtls_pk_context* key, char* certificate);
 
 
 #endif //CACLIENT_CACLIENT_CERTIFICATEREQUESTER_H

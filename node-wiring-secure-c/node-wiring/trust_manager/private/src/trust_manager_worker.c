@@ -23,6 +23,9 @@ struct trust_worker {
     volatile bool running;
 };
 
+/**
+ *
+ */
 static int trustWorker_rekey(void) {
     int res;
     mbedtls_pk_context *key = (mbedtls_pk_context *) malloc(sizeof(mbedtls_pk_context));
@@ -54,7 +57,7 @@ static int trustWorker_rekey(void) {
 
     // request cert from ca
     get_next_certificate_file_path(cert_path);
-    res = request_certificate(key, cert);
+    res = csr_get_certificate(key, cert);
     if (!res) {
         write_pem_to_file(cert, cert_path);
     } else {
@@ -74,6 +77,43 @@ static int trustWorker_rekey(void) {
     return res;
 }
 
+/**
+ * Recusrive trust reload. r specifies tries.
+ */
+static int refresh_ca_trust_r(mbedtls_x509_crt *ca_cert, int r)
+{
+    int ret;
+    char *ca_cert_filename = malloc(1024);
+    ret = get_recent_ca_certificate(ca_cert_filename);
+    ret += load_certificate(ca_cert, ca_cert_filename);
+    // verify ca cert
+    if (ret != 0) {
+
+        char *ca_cert_path = malloc(1024);
+        char* ca_cert_buf = malloc(4096);
+        get_next_ca_certificate_file_path(ca_cert_path);
+        if (!request_ca_certificate(ca_cert_buf)) {
+            write_pem_to_file(ca_cert_buf, ca_cert_path);
+        }
+        free(ca_cert_buf);
+        free(ca_cert_path);
+
+        if (r >= 0) {
+            refresh_ca_trust_r(ca_cert, --r);
+        }
+    }
+    return ret;
+}
+
+/**
+ * Reload the trust.
+ */
+static int refresh_ca_trust(mbedtls_x509_crt *ca_cert)
+{
+    refresh_ca_trust_r(ca_cert, 2);
+}
+
+
 /*
  * Perform all validation and refresh of certificates / csr's.
  */
@@ -85,11 +125,16 @@ static void* trustWorker_run(void* data) {
         int ret = 0;
         mbedtls_x509_crt *ca_cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
         mbedtls_x509_crt *cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
-        ret += load_certificate(ca_cert, CA_CERT);
 
+
+        refresh_ca_trust(ca_cert);
+
+        char *ca_cert_filename = malloc(1024);
+        ret = get_recent_ca_certificate(ca_cert_filename);
+        ret += load_certificate(ca_cert, ca_cert_filename);
         // verify ca cert
         if (ret != 0) {
-            // TODO: implement ca cert getter
+            trustWorker_ca_reload();
             goto fail;
         }
 
@@ -109,6 +154,8 @@ static void* trustWorker_run(void* data) {
         }
 
         fail:
+        free(ca_cert_filename);
+        free(cert_filename);
         free(ca_cert);
         free(cert);
 

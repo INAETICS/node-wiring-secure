@@ -9,6 +9,7 @@
 #endif
 
 #define CFSSL_SIGN_API_URL "http://localhost:8888/api/v1/cfssl/sign"
+#define CFSSL_CA_CERT_URL "http://localhost:8888/api/v1/cfssl/info"
 #define REFRESH_EARLY_THRESHOLD_SECONDS 30
 
 #define JSON_TYPE_HEADER "Content-Type: application/json"
@@ -63,15 +64,13 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s) {
     return size * nmemb;
 }
 
-
 /**
- * Get signed certificate from cfssl api
+ * Http wrapper for the cfssl api.
  */
-int request_certificate(mbedtls_pk_context *key, char *certificate) {
+int cfssl_ca_certget_wrapper(char* certificate, char body[], char url[])
+{
     CURL *curl;
     CURLcode res;
-
-    /* In windows, this will init the winsock stuff */
     curl_global_init(CURL_GLOBAL_ALL);
 
     /* get a curl handle */
@@ -80,28 +79,19 @@ int request_certificate(mbedtls_pk_context *key, char *certificate) {
         struct string s;
         init_string(&s);
 
-        /* First set the URL that is about to receive our POST. This URL can
-           just as well be a https:// URL if that is what should receive the
-           data. */
+        // init curl
         struct curl_slist *head = NULL;
         head = curl_slist_append(head, JSON_TYPE_HEADER);
-        curl_easy_setopt(curl, CURLOPT_URL, CFSSL_SIGN_API_URL);
+        curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &s);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, head);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
 
-        // generate the csr
-        char *csr = malloc(1024);
-        generate_csr(key, csr);
-
-        /* Now specify the POST data */
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, csr);
-
-        /* Perform the request, res will get the return code */
         res = curl_easy_perform(curl);
 
         /* Check for errors
-         * TODO: NOT WORKING CURRENTLY*/
+         * TODO: If you get a status code 0, but the code fails, check here... */
         if (res != CURLE_OK) {
             fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         } else {
@@ -110,17 +100,37 @@ int request_certificate(mbedtls_pk_context *key, char *certificate) {
             memcpy(certificate, cert->certificate, 4096);
 
             //Clean up!
-            free(csr);
             free(cert);
             free(s.ptr);
         }
-
-        /* always cleanup */
         curl_easy_cleanup(curl);
     }
     curl_global_cleanup();
     return res;
 }
+
+/**
+ * Retreive ca cert.
+ */
+int request_ca_certificate(char *ca_certificate)
+{
+    return cfssl_ca_certget_wrapper(ca_certificate, "{}", CFSSL_CA_CERT_URL);
+}
+
+/**
+ * Get signed certificate from cfssl api
+ */
+int csr_get_certificate(mbedtls_pk_context *key, char *certificate)
+{
+    int res;
+    // generate the csr
+    char *csr = malloc(1024);
+    generate_csr(key, csr);
+    res = cfssl_ca_certget_wrapper(certificate, csr, CFSSL_SIGN_API_URL);
+    free(csr);
+    return res;
+}
+
 
 /**
  * Check if date of a cert is still valid.
