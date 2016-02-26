@@ -110,7 +110,7 @@ static int refresh_ca_trust_r(mbedtls_x509_crt *ca_cert, int r)
  */
 static int refresh_ca_trust(mbedtls_x509_crt *ca_cert)
 {
-    refresh_ca_trust_r(ca_cert, 2);
+    return refresh_ca_trust_r(ca_cert, 2);
 }
 
 
@@ -134,8 +134,10 @@ static void* trustWorker_run(void* data) {
         ret += load_certificate(ca_cert, ca_cert_filename);
         // verify ca cert
         if (ret != 0) {
-            trustWorker_ca_reload();
-            goto fail;
+            if (!trustWorker_ca_reload()) {
+                printf("hard ca fail");
+                goto fail;
+            }
         }
 
         char *cert_filename = malloc(1024);
