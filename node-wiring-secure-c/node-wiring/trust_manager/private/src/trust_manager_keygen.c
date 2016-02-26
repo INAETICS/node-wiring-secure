@@ -173,13 +173,11 @@ void removeChar(char *str, char garbage) {
  */
 int write_pem_to_file(char* pem, char filename[])
 {
-    // Open a file for writing.
-    // (This will replace any existing file. Use "w+" for appending)
     FILE *file = fopen(filename, "w");
 
     int results = fputs(pem, file);
     if (results == EOF) {
-    // Failed to write do error code here.
+        return 1;
     }
     fclose(file);
 }

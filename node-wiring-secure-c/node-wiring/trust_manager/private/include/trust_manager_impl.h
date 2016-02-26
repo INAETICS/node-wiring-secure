@@ -17,4 +17,6 @@ struct trust_manager {
 extern void trust_manager_getCertificate(trust_manager_pt instance);
 
 
+
+
 #endif /* TRUST_MANAGER_IMPL_H_ */

@@ -4,7 +4,7 @@
 
 #include <celix_errno.h>
 #include <bundle_context.h>
-#include "../include/trust_manager_caresponse.h"
+#include "trust_manager_caresponse.h"
 
 #ifndef THALESCWIRING_TRUST_MANAGER_WORKER_H
 #define THALESCWIRING_TRUST_MANAGER_WORKER_H

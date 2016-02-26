@@ -6,16 +6,17 @@
 #include <bundle_context.h>
 #include <unistd.h>
 #include "trust_manager_worker.h"
+#include "trust_manager_impl.h"
 #include "stdlib.h"
 #include <mbedtls/pk.h>
 #include <mbedtls/x509_crt.h>
-#include "../include/trust_manager_certificaterequester.h"
-#include "../include/trust_manager_keygen.h"
+#include "trust_manager_certificaterequester.h"
+#include "trust_manager_keygen.h"
+#include "trust_manager_storage.h"
 
 #define CA_CERT "/tmp/cinkeys/ca.pem"
-#define PRIVATE_KEY "/tmp/cinkeys/client_private.key"
-#define PUBLIC_KEY "/tmp/cinkeys/client_public.key"
-#define CERTIFICATE "/tmp/cinkeys/client.pem"
+#define PRIVATE_KEY "/tmp/cinkeys/client_priv.key"
+#define PUBLIC_KEY "/tmp/cinkeys/client_pub.key"
 
 #define DEFAULT_WORKER_SLEEP 1
 
@@ -27,42 +28,45 @@ struct trust_worker {
 };
 
 static int trustWorker_rekey(void) {
-    // allocate mem
+    int res;
     mbedtls_pk_context *key = (mbedtls_pk_context *) malloc(sizeof(mbedtls_pk_context));
-
-    // gen keypair
     generate_keypair(key);
 
-    int res;
-
-    // print keys
+    char *cert_path = malloc(1024);
     char *pubkey = malloc(4096);
+    char *privkey = malloc(4096);
+    char* cert = malloc(4096);
+
     res = get_public_key(key, pubkey);
     if (!res) {
         write_pem_to_file(pubkey, PUBLIC_KEY);
     } else {
-        return res;
+        goto fail;
     }
-    free(pubkey);
 
-    char *privkey = malloc(4096);
     res = get_private_key(key, privkey);
     if (!res) {
-        write_pem_to_file(pubkey, PRIVATE_KEY);
+        write_pem_to_file(privkey, PRIVATE_KEY);
     } else {
-        return res;
+        goto fail;
     }
-    free(privkey);
 
     // request cert from ca
-    char* cert = malloc(4096);
+    get_next_certificate_file_path(cert_path);
     res = request_certificate(key, cert);
     if (!res) {
-        write_pem_to_file(cert, CERTIFICATE);
+        write_pem_to_file(cert, cert_path);
     } else {
-        return res;
+        goto fail;
     }
+
+    printf("\nrekey SUCCESS!");
+
+    fail:
     free(cert);
+    free(cert_path);
+    free(pubkey);
+    free(privkey);
     return res;
 }
 
@@ -85,10 +89,12 @@ static void* trustWorker_run(void* data) {
             goto fail;
         }
 
-        ret += load_certificate(cert, CERTIFICATE);
+        char *cert_filename = malloc(1024);
+        ret = get_most_recent_certificate(cert_filename);
+        ret += load_certificate(cert, cert_filename);
 
         // verify cert
-        if (!ret) {
+        if (ret == 0) {
             if (verify_certificate(cert, ca_cert, 0) != 0) {
                 trustWorker_rekey();
             } else {

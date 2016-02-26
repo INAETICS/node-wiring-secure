@@ -45,15 +45,17 @@ bundle(inaetics_trust_manager SOURCES
         private/src/activator
         private/src/trust_manager_caresponse
         private/src/trust_manager_certificaterequester
-        private/src/trust_manager_csr_generator
+        private/src/trust_manager_keygen
         private/src/trust_manager_impl
         private/src/trust_manager_worker
+        private/src/trust_manager_storage
 
         private/include/trust_manager_caresponse.h
         private/include/trust_manager_certificaterequester.h
-        private/include/trust_manager_csr_generator.h
+        private/include/trust_manager_keygen.h
         private/include/trust_manager_impl.h
         private/include/trust_manager_worker.h
+        private/include/trust_manager_storage.h
         )
 
 include_directories("${PROJECT_SOURCE_DIR}/utils/public/include")
