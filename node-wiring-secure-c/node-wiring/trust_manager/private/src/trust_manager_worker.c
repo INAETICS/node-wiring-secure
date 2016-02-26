@@ -10,7 +10,7 @@
 #include "stdlib.h"
 #include <mbedtls/pk.h>
 #include <mbedtls/x509_crt.h>
-#include "trust_manager_certificaterequester.h"
+#include "trust_manager_certhandler.h"
 #include "trust_manager_keygen.h"
 #include "trust_manager_storage.h"
 

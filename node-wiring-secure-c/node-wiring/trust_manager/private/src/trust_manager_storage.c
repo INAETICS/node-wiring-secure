@@ -79,7 +79,6 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
 //    char certlist[1024][1024];
     regex_t regex;
     int reti;
-    char msgbuf[100];
 
     if (d)
     {
@@ -87,11 +86,11 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
         reti = regcomp(&regex, reg_expression, 0);
         if (reti) {
             fprintf(stderr, "Could not compile regex\n");
-            exit(1);
+            return(3);
         }
 
         unsigned char buffer_priv[1024];
-        int i=0;
+//        int i=0;
         int skip=2;
         int found=0;
         while ((dir = readdir(d)) != NULL)

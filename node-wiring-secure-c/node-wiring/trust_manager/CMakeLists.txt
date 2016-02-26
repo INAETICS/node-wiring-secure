@@ -44,14 +44,14 @@ INCLUDE_DIRECTORIES(${JANSSON_INCLUDE_DIR})
 bundle(inaetics_trust_manager SOURCES
         private/src/activator
         private/src/trust_manager_caresponse
-        private/src/trust_manager_certificaterequester
+        private/src/trust_manager_certhandler
         private/src/trust_manager_keygen
         private/src/trust_manager_impl
         private/src/trust_manager_worker
         private/src/trust_manager_storage
 
         private/include/trust_manager_caresponse.h
-        private/include/trust_manager_certificaterequester.h
+        private/include/trust_manager_certhandler.h
         private/include/trust_manager_keygen.h
         private/include/trust_manager_impl.h
         private/include/trust_manager_worker.h
