@@ -587,9 +587,9 @@ static celix_status_t wiringAdmin_send(wiring_send_service_pt sendService, char 
 
         // TODO: caution!! i disabled the name validation for debugging purposes! this is not good...
         // this should be 2L
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYSTATUS, 0L);
+//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYSTATUS, 0L);
         curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
         curl_easy_setopt(curl, CURLOPT_READFUNCTION, wiringAdmin_HTTPReqReadCallback);

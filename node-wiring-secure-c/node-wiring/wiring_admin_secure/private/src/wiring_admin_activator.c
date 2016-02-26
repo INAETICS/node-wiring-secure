@@ -10,10 +10,13 @@
 
 #include "wiring_admin_impl.h"
 
+#include "trust_manager_service.h"
+
 struct activator {
 	bundle_context_pt context;
 	wiring_admin_pt admin;
 	wiring_admin_service_pt wiringAdminService;
+    trust_manager_service_pt trustManagerService;
 	service_registration_pt registration;
 };
 
@@ -29,6 +32,7 @@ celix_status_t bundleActivator_create(bundle_context_pt context, void **userData
 		activator->admin = NULL;
 		activator->registration = NULL;
 		activator->wiringAdminService = NULL;
+        activator->trustManagerService = NULL;
 
 		*userData = activator;
 	}
@@ -37,9 +41,35 @@ celix_status_t bundleActivator_create(bundle_context_pt context, void **userData
 }
 
 celix_status_t bundleActivator_start(void * userData, bundle_context_pt context) {
+	service_reference_pt ref = NULL;
+	celix_status_t status2 = bundleContext_getServiceReference(context, (char *) TRUST_MANAGER_SERVICE_NAME, &ref);
+    printf("getting here 1");
+	if (status2 == CELIX_SUCCESS) {
+		if (ref == NULL) {
+			printf("Greeting service reference not available\n");
+		} else {
+            printf("getting here 2");
+			trust_manager_service_pt trust_manager = NULL;
+			bundleContext_getService(context, ref, (void *) &trust_manager);
+			if (trust_manager == NULL){
+				printf("Greeting service not available\n");
+			} else {
+				bool result;
+				(*trust_manager->trust_manager_getCertificate)(trust_manager->instance);
+				bundleContext_ungetService(context, ref, &result);
+			}
+		}
+	}
+
+
+
+
+
+
 	celix_status_t status;
 	struct activator *activator = userData;
 
+    // create new wiring admin
 	status = wiringAdmin_create(context, &activator->admin);
 	if (status == CELIX_SUCCESS) {
 		activator->wiringAdminService = calloc(1, sizeof(struct wiring_admin_service));
