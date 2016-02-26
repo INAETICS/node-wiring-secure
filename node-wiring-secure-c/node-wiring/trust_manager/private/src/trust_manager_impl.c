@@ -11,4 +11,36 @@ void trust_manager_getCertificate(trust_manager_pt instance){
     printf("Getting certificate from  %s\n", instance->name);
 }
 
+/**
+ * Obtains the most recent certificate (absolute filepath)..
+ */
+extern int get_certificate(char* certificate_filepath)
+{
+    return get_recent_certificate(certificate_filepath);
+}
+
+/**
+ * Obtains the most recent ca certificate (absolute filepath)..
+ */
+extern int get_ca_certificate(char* ca_cert_filepath)
+{
+    return get_recent_ca_certificate(ca_cert_filepath);
+}
+
+/**
+ * Obtains the most recent private key (absolute filepath).
+ */
+extern int get_private_key(char* key_filepath)
+{
+    return get_recent_private_key(key_filepath);
+}
+
+/**
+ * Obtains the most recent public key (absolute filepath)..
+ */
+extern int get_public_key(char* key_filepath)
+{
+    return get_recent_public_key(key_filepath);
+}
+
 
