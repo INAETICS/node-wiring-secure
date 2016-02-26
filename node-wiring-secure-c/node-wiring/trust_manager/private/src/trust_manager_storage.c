@@ -92,15 +92,25 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
 
         unsigned char buffer_priv[1024];
         int i=0;
+        int skip=2;
+        int found=0;
         while ((dir = readdir(d)) != NULL)
         {
             // match regex
             reti = regexec(&regex, dir->d_name, 0, NULL, 0);
             if (!reti) {
                 sprintf(&buffer_priv, "%s/%s", folder, dir->d_name);
-                // return on first match...
-                strcpy(filepath, &buffer_priv);
-                return (0);
+                if (found == 0) {
+                    // set on first match...
+                    strcpy(filepath, &buffer_priv);
+                    found = 1;
+                } else {
+                    if (skip <= 0) {
+                        remove(&buffer_priv);
+                    } else {
+                        skip--;
+                    }
+                }
 //                strcpy(certlist[i++], filepath);
             } else if (reti == REG_NOMATCH) {
                 // nothing, no match
@@ -111,7 +121,10 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
         }
         closedir(d);
         regfree(&regex);
-        return(1);
+        if (found)
+            return(0);
+        else
+            return(1);
     } else {
         return(2);
     }

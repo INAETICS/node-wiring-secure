@@ -126,24 +126,13 @@ static void* trustWorker_run(void* data) {
         mbedtls_x509_crt *ca_cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
         mbedtls_x509_crt *cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
 
-
-        refresh_ca_trust(ca_cert);
-
-        char *ca_cert_filename = malloc(1024);
-        ret = get_recent_ca_certificate(ca_cert_filename);
-        ret += load_certificate(ca_cert, ca_cert_filename);
-        // verify ca cert
-        if (ret != 0) {
-            if (!trustWorker_ca_reload()) {
-                printf("hard ca fail");
-                goto fail;
-            }
+        if (refresh_ca_trust(ca_cert) != 0) {
+            goto fail;
         }
 
         char *cert_filename = malloc(1024);
         ret = get_recent_certificate(cert_filename);
         ret += load_certificate(cert, cert_filename);
-
         // verify cert
         if (ret == 0) {
             if (verify_certificate(cert, ca_cert, 0) != 0) {
@@ -155,8 +144,11 @@ static void* trustWorker_run(void* data) {
             trustWorker_rekey();
         }
 
+        // clean old keys
+        get_recent_public_key(cert);
+        get_recent_private_key(cert);
+
         fail:
-        free(ca_cert_filename);
         free(cert_filename);
         free(ca_cert);
         free(cert);
