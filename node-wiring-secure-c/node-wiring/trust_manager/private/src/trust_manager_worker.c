@@ -32,6 +32,7 @@ static int trustWorker_rekey(void) {
     generate_keypair(key);
 
     char *cert_path = malloc(1024);
+    char *cert_path_full = malloc(1024);
     char *ca_cert_path = malloc(1024);
     char *pubkey_path = malloc(1024);
     char *privkey_path = malloc(1024);
@@ -40,9 +41,11 @@ static int trustWorker_rekey(void) {
     char* cert = malloc(4096);
 
     get_next_public_key_file_path(pubkey_path);
+    get_next_full_certificate_file_path(cert_path_full);
     res = get_public_key(key, pubkey);
     if (!res) {
-        write_pem_to_file(pubkey, pubkey_path);
+        write_pem_to_file(pubkey, pubkey_path, false);
+        write_pem_to_file(pubkey, cert_path_full, true);
     } else {
         goto fail;
     }
@@ -50,7 +53,8 @@ static int trustWorker_rekey(void) {
     get_next_private_key_file_path(privkey_path);
     res = get_private_key(key, privkey);
     if (!res) {
-        write_pem_to_file(privkey, privkey_path);
+        write_pem_to_file(privkey, privkey_path, false);
+        write_pem_to_file(privkey, cert_path_full, true);
     } else {
         goto fail;
     }
@@ -59,7 +63,8 @@ static int trustWorker_rekey(void) {
     get_next_certificate_file_path(cert_path);
     res = csr_get_certificate(key, cert);
     if (!res) {
-        write_pem_to_file(cert, cert_path);
+        write_pem_to_file(cert, cert_path, false);
+        write_pem_to_file(cert, cert_path_full, true);
     } else {
         goto fail;
     }
@@ -93,7 +98,7 @@ static int refresh_ca_trust_r(mbedtls_x509_crt *ca_cert, int r)
         char* ca_cert_buf = malloc(4096);
         get_next_ca_certificate_file_path(ca_cert_path);
         if (!request_ca_certificate(ca_cert_buf)) {
-            write_pem_to_file(ca_cert_buf, ca_cert_path);
+            write_pem_to_file(ca_cert_buf, ca_cert_path, false);
         }
         free(ca_cert_buf);
         free(ca_cert_path);
@@ -147,6 +152,7 @@ static void* trustWorker_run(void* data) {
         // clean old keys
         get_recent_public_key(cert);
         get_recent_private_key(cert);
+        get_recent_full_certificate(cert);
 
         fail:
         free(cert_filename);

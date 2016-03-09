@@ -6,6 +6,7 @@
 #define CACLIENT_CACLIENT_CSR_GENERATOR_H
 
 #include <mbedtls/pk.h>
+#include <stdbool.h>
 
 
 /**
@@ -31,6 +32,6 @@ int get_private_key(mbedtls_pk_context* key, char* private_key);
 /**
  * Writes any pem to file.
  */
-int write_pem_to_file(char* pem, char filename[]);
+int write_pem_to_file(char* pem, char filename[], bool append);
 
 #endif //CACLIENT_CACLIENT_CSR_GENERATOR_H

@@ -2,6 +2,7 @@
 // Created by Martin Gaida on 12/8/15.
 //
 #include <mbedtls/rsa.h>
+#include <stdbool.h>
 
 #include "trust_manager_keygen.h"
 
@@ -70,7 +71,7 @@ int generate_keypair (mbedtls_pk_context* key)
 //    opt.filename            = "keyfile.key";
     opt.debug_level         = 0;
 //    opt.output_file         = "cert.req";
-    opt.subject_name        = "CN=Cert,O=INAETICS,C=NL";
+    opt.subject_name        = "CN=127.0.0.1,O=INAETICS,C=NL";
     opt.key_usage           = MBEDTLS_X509_KU_KEY_ENCIPHERMENT;
     opt.ns_cert_type        = MBEDTLS_X509_NS_CERT_TYPE_SSL_CLIENT;
 
@@ -122,6 +123,30 @@ int generate_keypair (mbedtls_pk_context* key)
     return ret;
 }
 
+//int get_primary_public_up(char *ip)
+//{
+//    FILE *fp;
+//    char path[1024];
+//
+//    /* Open the command for reading. */
+//    fp = popen("/bin/ip route get 1 | awk '{print $NF;exit}'", "r");
+//    if (fp == NULL) {
+//        printf("Failed to run command\n" );
+//        exit(1);
+//    }
+//
+//    /* Read the output a line at a time - output it. */
+//    while (fgets(path, sizeof(path)-1, fp) != NULL) {
+//        printf("%s", path);
+//    }
+//
+//    /* close */
+//    pclose(fp);
+//
+//    return 0;
+//}
+
+
 /**
  * Public key in standard pem char[] representation. Returns 0 on success.
  */
@@ -171,9 +196,10 @@ void removeChar(char *str, char garbage) {
 /**
  * Write pem to file.
  */
-int write_pem_to_file(char* pem, char filename[])
+int write_pem_to_file(char* pem, char filename[], bool append)
 {
-    FILE *file = fopen(filename, "w");
+    char *apnd = (append) ? "a" : "w";
+    FILE *file = fopen(filename, apnd);
 
     int results = fputs(pem, file);
     if (results == EOF) {
@@ -193,8 +219,8 @@ int generate_csr(mbedtls_pk_context* key, char* csr)
     mbedtls_x509write_csr_init( &req );
     mbedtls_x509write_csr_set_md_alg( &req, MBEDTLS_MD_SHA256 );
     mbedtls_x509write_csr_set_key( &req, key );
-    mbedtls_x509write_csr_set_key_usage( &req, opt.key_usage);
-    mbedtls_x509write_csr_set_ns_cert_type( &req, opt.ns_cert_type);
+    mbedtls_x509write_csr_set_key_usage( &req, opt.key_usage );
+    mbedtls_x509write_csr_set_ns_cert_type( &req, opt.ns_cert_type );
     mbedtls_x509write_csr_set_subject_name( &req, opt.subject_name );
 
     unsigned char buffer_csr[4096];

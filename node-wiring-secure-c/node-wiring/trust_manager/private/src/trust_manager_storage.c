@@ -21,6 +21,9 @@
 
 #define CERTIFICATE "/tmp/cinkeys/client.%d.pem"
 #define CERTIFICATE_REGEX "^\\(client\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
+
+#define CERTIFICATE_FULL "/tmp/cinkeys/client_full.%d.pem"
+#define CERTIFICATE_FULL_REGEX "^\\(client_full\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
 // in a "readable" way: ^(client\\.){1}([[:digit:]]){10}(\\.pem){1}$
 
 /**
@@ -32,6 +35,17 @@ int get_next_certificate_file_path(char* filepath)
     sprintf(filepath, CERTIFICATE, stamp);
     return 0;
 }
+
+/**
+ * Obtains the next full certificate (incl keys) file path.
+ */
+int get_next_full_certificate_file_path(char* filepath)
+{
+    int stamp = ((int)time(NULL));
+    sprintf(filepath, CERTIFICATE_FULL, stamp);
+    return 0;
+}
+
 
 /**
  * Obtains the next ca certificate file path.
@@ -179,4 +193,17 @@ int get_recent_ca_certificate(char* ca_cert_filepath)
 int get_recent_certificate(char* certificate_filepath)
 {
     return get_recent_file_by_regex(certificate_filepath, KEY_STORAGE_FOLDER, CERTIFICATE_REGEX);
+}
+
+/**
+ * Function to retrieve the most recent full certificate (incl pub / priv key) filepath.
+ * Returns:
+ * 0 - success
+ * 1 - no cert found
+ * 2 - folder not found
+ * 3 - failure
+ */
+int get_recent_full_certificate(char* certificate_filepath)
+{
+    return get_recent_file_by_regex(certificate_filepath, KEY_STORAGE_FOLDER, CERTIFICATE_FULL_REGEX);
 }
