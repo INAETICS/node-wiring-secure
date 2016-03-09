@@ -66,14 +66,7 @@ int generate_keypair (mbedtls_pk_context* key)
     const char *pers = "gen_key";
 //#if defined(MBEDTLS_ECP_C)
 //    const mbedtls_ecp_curve_info *curve_info;
-//#endif
-
-//    opt.filename            = "keyfile.key";
-    opt.debug_level         = 0;
-//    opt.output_file         = "cert.req";
-    opt.subject_name        = "CN=127.0.0.1,O=INAETICS,C=NL";
-    opt.key_usage           = MBEDTLS_X509_KU_KEY_ENCIPHERMENT;
-    opt.ns_cert_type        = MBEDTLS_X509_NS_CERT_TYPE_SSL_CLIENT;
+//#endifz
 
     int res = 0;
 
@@ -123,28 +116,26 @@ int generate_keypair (mbedtls_pk_context* key)
     return ret;
 }
 
-//int get_primary_public_up(char *ip)
-//{
-//    FILE *fp;
-//    char path[1024];
-//
-//    /* Open the command for reading. */
-//    fp = popen("/bin/ip route get 1 | awk '{print $NF;exit}'", "r");
-//    if (fp == NULL) {
-//        printf("Failed to run command\n" );
-//        exit(1);
-//    }
-//
-//    /* Read the output a line at a time - output it. */
-//    while (fgets(path, sizeof(path)-1, fp) != NULL) {
-//        printf("%s", path);
-//    }
-//
-//    /* close */
-//    pclose(fp);
-//
-//    return 0;
-//}
+int get_primary_public_up(char *ip)
+{
+    FILE *fp;
+    char ip_buf[256];
+
+    fp = popen("/bin/ip route get 1 | awk '{print $NF;exit}'", "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n" );
+        exit(1);
+    }
+
+    while (fgets(ip_buf, sizeof(ip_buf)-1, fp) != NULL) {
+        sprintf(ip, "%s", ip_buf);
+        removeChar(ip, '\n');
+    }
+
+    pclose(fp);
+
+    return 0;
+}
 
 
 /**
@@ -215,14 +206,18 @@ int generate_csr(mbedtls_pk_context* key, char* csr)
 {
     int res = 0;
 
+    char ip[256];
+    char *sn = malloc(512);
+    get_primary_public_up(ip);
+    sprintf(&sn, "CN=%s,O=INAETICS,C=NL", ip);
+
     mbedtls_x509write_csr req;
     mbedtls_x509write_csr_init( &req );
     mbedtls_x509write_csr_set_md_alg( &req, MBEDTLS_MD_SHA256 );
     mbedtls_x509write_csr_set_key( &req, key );
-    mbedtls_x509write_csr_set_key_usage( &req, opt.key_usage );
-    mbedtls_x509write_csr_set_ns_cert_type( &req, opt.ns_cert_type );
-    mbedtls_x509write_csr_set_subject_name( &req, opt.subject_name );
-
+    mbedtls_x509write_csr_set_key_usage( &req, MBEDTLS_X509_KU_KEY_ENCIPHERMENT );
+    mbedtls_x509write_csr_set_ns_cert_type( &req, MBEDTLS_X509_NS_CERT_TYPE_SSL_CLIENT );
+    mbedtls_x509write_csr_set_subject_name( &req, &sn );
     unsigned char buffer_csr[4096];
     res = mbedtls_x509write_csr_pem(&req, buffer_csr, 4096, mbedtls_ctr_drbg_random, &ctr_drbg );
 
@@ -237,6 +232,7 @@ int generate_csr(mbedtls_pk_context* key, char* csr)
     removeChar((char *) temp_csr, '\n');
     sprintf((char *) csr_body, "-----BEGIN CERTIFICATE REQUEST-----\\n%s\\n-----END CERTIFICATE REQUEST-----", (char*) temp_csr);
     sprintf(csr, "{\"certificate_request\":\"%s\"}", (char *) csr_body);
+    printf("\n\n%s\n\n", temp_csr);
 
     mbedtls_x509write_csr_free( &req );
     mbedtls_ctr_drbg_free( &ctr_drbg );
