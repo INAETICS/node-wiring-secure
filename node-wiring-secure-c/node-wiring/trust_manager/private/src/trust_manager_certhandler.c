@@ -94,8 +94,7 @@ int cfssl_ca_certget_wrapper(char* certificate, char body[], char url[])
         } else {
             //Get the response
             certresponse *cert = parse_certificate_response(s.ptr);
-            printf("\n\n\n\n %s \n\n\n", &cert->certificate);
-            memcpy(certificate, cert->certificate, sizeof(&cert->certificate));
+            memcpy(certificate, cert->certificate, 4096);
 
             //Clean up!
             free(cert);

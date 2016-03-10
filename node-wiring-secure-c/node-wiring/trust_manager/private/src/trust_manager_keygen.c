@@ -36,18 +36,25 @@
 #define KEY_SIZE 2048
 #define EXPONENT 65537
 
-/*
- * global options
- */
-struct options
-{
-    const char *filename;       /* filename of the key file             */
-    int debug_level;            /* level of debugging                   */
-    const char *output_file;    /* where to store the constructed key file  */
-    const char *subject_name;   /* subject name for certificate request */
-    unsigned char key_usage;    /* key usage flags                      */
-    unsigned char ns_cert_type; /* NS cert type                         */
-} opt;
+#define CSR_START_DEFAULT "-----BEGIN CERTIFICATE REQUEST-----"
+#define CSR_START_CFSSL "-----BEGIN CERTIFICATE REQUEST-----\\n"
+#define CSR_STOP_DEFAULT "-----END CERTIFICATE REQUEST-----"
+#define CSR_STOP_CFSSL "\\n-----END CERTIFICATE REQUEST-----"
+#define CSR_CFSSL_JSON "{\"certificate_request\":\"%s\"}"
+#define CSR_CERT_SUBJECT_NAME "CN=%s,O=INAETICS,C=NL"
+
+///*
+// * global options
+// */
+//struct options
+//{
+//    const char *filename;       /* filename of the key file             */
+//    int debug_level;            /* level of debugging                   */
+//    const char *output_file;    /* where to store the constructed key file  */
+//    const char *subject_name;   /* subject name for certificate request */
+//    unsigned char key_usage;    /* key usage flags                      */
+//    unsigned char ns_cert_type; /* NS cert type                         */
+//} opt;
 
 mbedtls_ctr_drbg_context ctr_drbg;
 
@@ -66,7 +73,7 @@ int generate_keypair (mbedtls_pk_context* key)
     const char *pers = "gen_key";
 //#if defined(MBEDTLS_ECP_C)
 //    const mbedtls_ecp_curve_info *curve_info;
-//#endifz
+//#endif
 
     int res = 0;
 
@@ -116,6 +123,9 @@ int generate_keypair (mbedtls_pk_context* key)
     return ret;
 }
 
+/**
+ * Gets the systems primary public ip for the Certificate SN / CN.
+ */
 int get_primary_public_up(char *ip)
 {
     FILE *fp;
@@ -136,7 +146,6 @@ int get_primary_public_up(char *ip)
 
     return 0;
 }
-
 
 /**
  * Public key in standard pem char[] representation. Returns 0 on success.
@@ -174,7 +183,11 @@ int get_private_key(mbedtls_pk_context* key, char* private_key)
     return ret;
 }
 
-void removeChar(char *str, char garbage) {
+/**
+ * Removes char in char array
+ */
+void removeChar(char *str, char garbage)
+{
 
     char *src, *dst;
     for (src = dst = str; *src != '\0'; src++) {
@@ -200,6 +213,52 @@ int write_pem_to_file(char* pem, char filename[], bool append)
 }
 
 /**
+ * Replaces pattern in char array.
+ */
+char * replace(char const * const original, char const * const pattern, char const * const replacement)
+{
+    size_t const replen = strlen(replacement);
+    size_t const patlen = strlen(pattern);
+    size_t const orilen = strlen(original);
+
+    size_t patcnt = 0;
+    const char * oriptr;
+    const char * patloc;
+
+    // find how many times the pattern occurs in the original string
+    for (oriptr = original; patloc = strstr(oriptr, pattern); oriptr = patloc + patlen)
+    {
+        patcnt++;
+    }
+
+    {
+        // allocate memory for the new string
+        size_t const retlen = orilen + patcnt * (replen - patlen);
+        char * const returned = (char *) malloc( sizeof(char) * (retlen + 1) );
+
+        if (returned != NULL)
+        {
+            // copy the original string,
+            // replacing all the instances of the pattern
+            char * retptr = returned;
+            for (oriptr = original; patloc = strstr(oriptr, pattern); oriptr = patloc + patlen)
+            {
+                size_t const skplen = patloc - oriptr;
+                // copy the section until the occurence of the pattern
+                strncpy(retptr, oriptr, skplen);
+                retptr += skplen;
+                // copy the replacement
+                strncpy(retptr, replacement, replen);
+                retptr += replen;
+            }
+            // copy the rest of the string.
+            strcpy(retptr, oriptr);
+        }
+        return returned;
+    }
+}
+
+/**
  * Writes a cfssl api compatible json csr. Returns 0 on success.
  */
 int generate_csr(mbedtls_pk_context* key, char* csr)
@@ -209,7 +268,7 @@ int generate_csr(mbedtls_pk_context* key, char* csr)
     char ip[256];
     char *sn = malloc(512);
     get_primary_public_up(ip);
-    sprintf(&sn, "CN=%s,O=INAETICS,C=NL", ip);
+    sprintf(&sn, CSR_CERT_SUBJECT_NAME, ip);
 
     mbedtls_x509write_csr req;
     mbedtls_x509write_csr_init( &req );
@@ -227,14 +286,15 @@ int generate_csr(mbedtls_pk_context* key, char* csr)
     }
 
     char* temp_csr[4096];
-    char* csr_body[4102];
-    strncpy((char *) temp_csr, (const char*) &buffer_csr[36], 923);
+    strncpy((char *) temp_csr, (const char*) &buffer_csr, 4096);
     removeChar((char *) temp_csr, '\n');
-    sprintf((char *) csr_body, "-----BEGIN CERTIFICATE REQUEST-----\\n%s\\n-----END CERTIFICATE REQUEST-----", (char*) temp_csr);
-    sprintf(csr, "{\"certificate_request\":\"%s\"}", (char *) csr_body);
-    printf("\n\n%s\n\n", temp_csr);
+
+    strcpy(temp_csr, replace((char *) temp_csr, CSR_START_DEFAULT, CSR_START_CFSSL));
+    strcpy(temp_csr, replace((char *) temp_csr, CSR_STOP_DEFAULT, CSR_STOP_CFSSL));
+    sprintf(csr, CSR_CFSSL_JSON, (char *) temp_csr);
 
     mbedtls_x509write_csr_free( &req );
     mbedtls_ctr_drbg_free( &ctr_drbg );
     return res;
 }
+

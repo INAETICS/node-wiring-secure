@@ -91,12 +91,13 @@ static int refresh_ca_trust_r(mbedtls_x509_crt *ca_cert, int r)
     char *ca_cert_filename = malloc(1024);
     ret = get_recent_ca_certificate(ca_cert_filename);
     ret += load_certificate(ca_cert, ca_cert_filename);
+
     // verify ca cert
     if (ret != 0) {
-
         char *ca_cert_path = malloc(1024);
         char* ca_cert_buf = malloc(4096);
         get_next_ca_certificate_file_path(ca_cert_path);
+
         if (!request_ca_certificate(ca_cert_buf)) {
             write_pem_to_file(ca_cert_buf, ca_cert_path, false);
         }
