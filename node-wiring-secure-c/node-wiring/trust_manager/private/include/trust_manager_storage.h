@@ -8,6 +8,11 @@
 #endif //THALESCWIRING_TRUST_MANAGER_STORAGE_H
 
 /**
+ * Checks if the keyfolder exists and creates it if not.
+ */
+int check_create_keyfolder();
+
+/**
  * Obtains the next certificate file path.
  */
 int get_next_certificate_file_path(char* filepath);

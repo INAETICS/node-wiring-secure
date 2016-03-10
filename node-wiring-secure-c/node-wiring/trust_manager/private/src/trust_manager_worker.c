@@ -120,6 +120,8 @@ static int refresh_ca_trust(mbedtls_x509_crt *ca_cert)
 }
 
 
+
+
 /*
  * Perform all validation and refresh of certificates / csr's.
  */
@@ -129,6 +131,13 @@ static void* trustWorker_run(void* data) {
     int i = 0;
     while ((celixThreadMutex_lock(&worker->workerLock) == CELIX_SUCCESS) && worker->running) {
         int ret = 0;
+
+        if (check_create_keyfolder() != 0) {
+            printf("\nERROR: can't create key storage folder.\n");
+            fflush(stdout);
+            exit(1);
+        }
+
         mbedtls_x509_crt *ca_cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
         mbedtls_x509_crt *cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
 

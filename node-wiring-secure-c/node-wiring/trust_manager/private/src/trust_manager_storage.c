@@ -6,6 +6,9 @@
 #include <regex.h>
 #include <string.h>
 #include "stdlib.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "trust_manager_storage.h"
 
@@ -26,6 +29,19 @@
 #define CERTIFICATE_FULL "/tmp/cinkeys/client_full.%d.pem"
 #define CERTIFICATE_FULL_REGEX "^\\(client_full\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
 // in a "readable" way: ^(client\\.){1}([[:digit:]]){10}(\\.pem){1}$
+
+/**
+ * Checks if key folder exists and creates it if not.
+ */
+int check_create_keyfolder()
+{
+    struct stat st = {0};
+
+    if (stat(KEY_STORAGE_FOLDER, &st) == -1) {
+        return mkdir(KEY_STORAGE_FOLDER, 0700);
+    }
+    return 0;
+}
 
 /**
  * Obtains the next certificate file path.
