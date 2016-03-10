@@ -43,19 +43,6 @@
 #define CSR_CFSSL_JSON "{\"certificate_request\":\"%s\"}"
 #define CSR_CERT_SUBJECT_NAME "CN=%s,O=INAETICS,C=NL"
 
-///*
-// * global options
-// */
-//struct options
-//{
-//    const char *filename;       /* filename of the key file             */
-//    int debug_level;            /* level of debugging                   */
-//    const char *output_file;    /* where to store the constructed key file  */
-//    const char *subject_name;   /* subject name for certificate request */
-//    unsigned char key_usage;    /* key usage flags                      */
-//    unsigned char ns_cert_type; /* NS cert type                         */
-//} opt;
-
 mbedtls_ctr_drbg_context ctr_drbg;
 
 /**
