@@ -1,1 +1,0 @@
-To launch, change the set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}) to your own celix install location
