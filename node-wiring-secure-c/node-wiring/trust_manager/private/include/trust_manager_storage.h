@@ -46,3 +46,8 @@ int get_recent_private_key(char* ca_cert_filepath);
  * Obtains the most recent public key filepath.
  */
 int get_recent_public_key(char* ca_cert_filepath);
+
+/**
+ * Obtains the most recent full certificate filepath.
+ */
+int get_recent_full_certificate_content(char* content);

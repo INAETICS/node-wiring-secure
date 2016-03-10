@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <regex.h>
 #include <string.h>
+#include "stdlib.h"
 
 #include "trust_manager_storage.h"
 
@@ -207,3 +208,101 @@ int get_recent_full_certificate(char* certificate_filepath)
 {
     return get_recent_file_by_regex(certificate_filepath, KEY_STORAGE_FOLDER, CERTIFICATE_FULL_REGEX);
 }
+
+/**
+ * Reads the contents of a file.
+ */
+int read_file_contents(char* content, char* filepath)
+{
+    FILE *fp;
+    long lSize;
+    char *buffer;
+
+    fp = fopen ( filepath , "rb" );
+    if( !fp ) perror(filepath),exit(1);
+
+    fseek( fp , 0L , SEEK_END);
+    lSize = ftell( fp );
+    rewind( fp );
+
+    /* allocate memory for entire content */
+    buffer = calloc( 1, lSize+1 );
+    if( !buffer ) fclose(fp),fputs("memory alloc fails",stderr),exit(1);
+
+    /* copy the file into the buffer */
+    if( 1!=fread( buffer , lSize, 1 , fp) )
+        fclose(fp),free(buffer),fputs("entire read fails",stderr),exit(1);
+
+    strcpy(content, buffer);
+
+    fclose(fp);
+    free(buffer);
+
+    return 0;
+}
+
+/**
+ * Reads the content of the full cert (with pub & priv key).
+ */
+int get_recent_full_certificate_content(char* content)
+{
+    int ret;
+    char* filepath = malloc(256);
+    get_recent_full_certificate(filepath);
+    ret = read_file_contents(content, filepath);
+    free(filepath);
+    return ret;
+}
+
+/**
+ * Reads the content of the cert.
+ */
+int get_recent_certificate_content(char* content)
+{
+    int ret;
+    char* filepath = malloc(256);
+    get_recent_certificate(filepath);
+    ret = read_file_contents(content, filepath);
+    free(filepath);
+    return ret;
+}
+
+/**
+ * Reads the content of the ca cert.
+ */
+int get_recent_ca_certificate_content(char* content)
+{
+    int ret;
+    char* filepath = malloc(256);
+    get_recent_ca_certificate(filepath);
+    ret = read_file_contents(content, filepath);
+    free(filepath);
+    return ret;
+}
+
+/**
+ * Reads the content of the public key.
+ */
+int get_recent_public_key_content(char* content)
+{
+    int ret;
+    char* filepath = malloc(256);
+    get_recent_public_key(filepath);
+    ret = read_file_contents(content, filepath);
+    free(filepath);
+    return ret;
+}
+
+/**
+ * Reads the content of the private key.
+ */
+int get_recent_private_key_content(char* content)
+{
+    int ret;
+    char* filepath = malloc(256);
+    get_recent_private_key(filepath);
+    ret = read_file_contents(content, filepath);
+    free(filepath);
+    return ret;
+}
+

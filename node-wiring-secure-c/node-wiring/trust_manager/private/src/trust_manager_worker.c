@@ -150,6 +150,7 @@ static void* trustWorker_run(void* data) {
             trustWorker_rekey();
         }
 
+
         // clean old keys
         get_recent_public_key(cert);
         get_recent_private_key(cert);
