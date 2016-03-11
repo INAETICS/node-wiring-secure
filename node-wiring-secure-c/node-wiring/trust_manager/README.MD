@@ -107,6 +107,5 @@ More Information About The INAETICS Project
    [Apache Celix]: <https://celix.apache.org/>
    [Apache License Version 2.0, January 2004]: <https://github.com/INAETICS/Documentation/blob/master/LICENSE>
    [INAETICS Project Web Page]: <http://www.inaetics.org/>
-   [Source: Digicert]: <https://blog.digicert.com/short-lived-certificates/>
    [mbed TLS]: <https://tls.mbed.org/>
    [curl]: <https://curl.haxx.se/>
