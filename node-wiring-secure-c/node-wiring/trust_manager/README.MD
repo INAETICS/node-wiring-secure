@@ -48,6 +48,8 @@ ___
 ```
 extern int get_current_public_key(char* key_filepath)
 ```
+
+
 ### Retrieve current certificates and keys as textual representation
 > Retrieve a textual representation of the latest, valid certificate:
 ```
