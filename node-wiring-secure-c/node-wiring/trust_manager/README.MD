@@ -26,54 +26,54 @@ The following api is provided by the trust manager bundle:
 ### Retrieve current certificates and key file references
 > Retrieve an absolute reference to a file containing the latest, valid certificate:
 ```
-extern int get_current_certificate(char* certificate_filepath)
+extern int trust_manager_getCurrentCertificate(trust_manager_pt instance, char* certificate_filepath);
 ```
 ___
 > Retrieve an absolute reference to a file containing the latest, valid certificate, private and public key:
 ```
-extern int get_current_full_certificate(char* certificate_filepath)
+extern int trust_manager_getCurrentFullCertificate(trust_manager_pt instance, char* certificate_filepath);
 ```
 ___
 > Retrieve an absolute reference to a file containing the latest, valid ca certificate:
 ```
-extern int get_current_ca_certificate(char* ca_cert_filepath)
+extern int trust_manager_getCurrentCaCertificate(trust_manager_pt instance, char* ca_cert_filepath);
 ```
 ___
 > Retrieve an absolute reference to a file containing the latest, valid private key, that can be used with the current certificate.
 ```
-extern int get_current_private_key(char* key_filepath)
+extern int trust_manager_getCurrentPrivateKey(trust_manager_pt instance, char* key_filepath);
 ```
 ___
 > Retrieve an absolute reference to a file containing the latest, valid public key, that can be used with the current certificate.
 ```
-extern int get_current_public_key(char* key_filepath)
+extern int trust_manager_getCurrentPublicKey(trust_manager_pt instance, char* key_filepath);
 ```
 
 
 ### Retrieve current certificates and keys as textual representation
 > Retrieve a textual representation of the latest, valid certificate:
 ```
-extern int get_current_certificate_content(char* content)
+extern int trust_manager_getCurrentCertificateContent(trust_manager_pt instance, char* content);
 ```
 ___
 > Retrieve a textual representation of the latest, valid certificate, private and public key:
 ```
-extern int get_current_full_certificate_content(char* content)
+extern int trust_manager_getCurrentFullCertificateContent(trust_manager_pt instance, char* content)
 ```
 ___
 > Retrieve a textual representation of the latest, valid ca certificate:
 ```
-extern int get_current_ca_certificate_content(char* content)
+extern int trust_manager_getCurrentCaCertificateContent(trust_manager_pt instance, char* content);
 ```
 ___
 > Retrieve a textual representation of the latest, valid private key, that can be used with the current certificate.
 ```
-extern int get_current_private_key_content(char* content)
+extern int trust_manager_getCurrentPrivateKeyContent(trust_manager_pt instance, char* content);
 ```
 ___
 > Retrieve a textual representation of the latest, valid public key, that can be used with the current certificate.
 ```
-extern int get_current_public_key_content(char* content)
+extern int trust_manager_getCurrentPublicKeyContent(trust_manager_pt instance, char* content);
 ```
 
 ### Version
@@ -89,9 +89,7 @@ The INAETICS Trust Manager uses the following libraries and open source projects
 
 ### Todos
 
- - Lock certificate retrieved on trust refresh
- - Configurable key storage location
- - Configurable CA host & port
+ - Lock api while new certificate is being retreived
 
 License
 ----
