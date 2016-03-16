@@ -43,19 +43,23 @@ celix_status_t bundleActivator_create(bundle_context_pt context, void **userData
 celix_status_t bundleActivator_start(void * userData, bundle_context_pt context) {
 	service_reference_pt ref = NULL;
 	celix_status_t status2 = bundleContext_getServiceReference(context, (char *) TRUST_MANAGER_SERVICE_NAME, &ref);
-    printf("getting here 1");
 	if (status2 == CELIX_SUCCESS) {
 		if (ref == NULL) {
-			printf("Greeting service reference not available\n");
+			printf("\nTRUST MANAGER NOT AVAILABLE!\n");
 		} else {
-            printf("getting here 2");
 			trust_manager_service_pt trust_manager = NULL;
 			bundleContext_getService(context, ref, (void *) &trust_manager);
 			if (trust_manager == NULL){
-				printf("Greeting service not available\n");
+				printf("\nTRUST MANAGER NOT AVAILABLE!\n");
 			} else {
 				bool result;
-				(*trust_manager->trust_manager_getCertificate)(trust_manager->instance);
+
+
+				char test[1024];
+				(*trust_manager->trust_manager_getCurrentPrivateKey)(trust_manager->instance, test);
+				printf("\n\n\nCHECK:\n\n %s \n\n\n\n", test);
+
+
 				bundleContext_ungetService(context, ref, &result);
 			}
 		}

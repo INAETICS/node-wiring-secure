@@ -15,7 +15,16 @@ typedef struct trust_manager_service *trust_manager_service_pt;
 
 struct trust_manager_service {
 	trust_manager_pt instance;
-	void (*trust_manager_getCertificate)(trust_manager_pt instance);
+	int (*trust_manager_getCurrentCertificate)(trust_manager_pt instance, char* certificate_filepath);
+	int (*trust_manager_getCurrentFullCertificate)(trust_manager_pt instance, char* certificate_filepath);
+	int (*trust_manager_getCurrentCaCertificate)(trust_manager_pt instance, char* ca_cert_filepath);
+	int (*trust_manager_getCurrentPrivateKey)(trust_manager_pt instance, char* key_filepath);
+	int (*trust_manager_getCurrentPublicKey)(trust_manager_pt instance, char* key_filepath);
+	int (*trust_manager_getCurrentCertificateContent)(trust_manager_pt instance, char* content);
+	int (*trust_manager_getCurrentFullCertificateContent)(trust_manager_pt instance, char* content);
+	int (*trust_manager_getCurrentCaCertificateContent)(trust_manager_pt instance, char* content);
+	int (*trust_manager_getCurrentPrivateKeyContent)(trust_manager_pt instance, char* content);
+	int (*trust_manager_getCurrentPublicKeyContent)(trust_manager_pt instance, char* content);
 };
 
 #endif /* TRUST_MANAGER_H_ */

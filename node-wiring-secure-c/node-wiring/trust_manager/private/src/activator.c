@@ -82,7 +82,17 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
             act->trust_managerService->instance->ca_port = caPort;
 			act->trust_managerService->instance->key_storage = keyStorage;
             act->trust_managerService->instance->refresh_interval = refreshInterval;
-			act->trust_managerService->trust_manager_getCertificate = trust_manager_getCertificate;
+			// api
+			act->trust_managerService->trust_manager_getCurrentCertificate = trust_manager_getCurrentCertificate;
+			act->trust_managerService->trust_manager_getCurrentFullCertificate = trust_manager_getCurrentFullCertificate;
+			act->trust_managerService->trust_manager_getCurrentCaCertificate = trust_manager_getCurrentCaCertificate;
+			act->trust_managerService->trust_manager_getCurrentPrivateKey = trust_manager_getCurrentPrivateKey;
+			act->trust_managerService->trust_manager_getCurrentPublicKey = trust_manager_getCurrentPublicKey;
+			act->trust_managerService->trust_manager_getCurrentCertificateContent = trust_manager_getCurrentCertificateContent;
+			act->trust_managerService->trust_manager_getCurrentFullCertificateContent = trust_manager_getCurrentFullCertificateContent;
+			act->trust_managerService->trust_manager_getCurrentCaCertificateContent = trust_manager_getCurrentCaCertificateContent;
+			act->trust_managerService->trust_manager_getCurrentPrivateKeyContent = trust_manager_getCurrentPrivateKeyContent;
+			act->trust_managerService->trust_manager_getCurrentPublicKeyContent = trust_manager_getCurrentPublicKeyContent;
 
 			// run the worker thread
 			trustWorker_create(context, &act->trust_worker, &act->trust_managerService->instance);

@@ -18,56 +18,54 @@ struct trust_manager {
     int refresh_interval;
 };
 
-extern void trust_manager_getCertificate(trust_manager_pt instance);
-
 /**
  * Obtains the most recent certificate (absolute filepath)..
  */
-extern int get_current_certificate(trust_manager_pt instance, char* certificate_filepath);
+extern int trust_manager_getCurrentCertificate(trust_manager_pt instance, char* certificate_filepath);
 
 /**
  * Obtains the most recent full certificate (absolute filepath)..
  */
-extern int get_current_full_certificate(trust_manager_pt instance, char* certificate_filepath);
+extern int trust_manager_getCurrentFullCertificate(trust_manager_pt instance, char* certificate_filepath);
 
 /**
  * Obtains the most recent ca certificate (absolute filepath)..
  */
-extern int get_current_ca_certificate(trust_manager_pt instance, char* ca_cert_filepath);
+extern int trust_manager_getCurrentCaCertificate(trust_manager_pt instance, char* ca_cert_filepath);
 
 /**
  * Obtains the most recent private key (absolute filepath).
  */
-extern int get_current_private_key(trust_manager_pt instance, char* key_filepath);
+extern int trust_manager_getCurrentPrivateKey(trust_manager_pt instance, char* key_filepath);
 
 /**
  * Obtains the most recent public key (absolute filepath)..
  */
-extern int get_current_public_key(trust_manager_pt instance, char* key_filepath);
+extern int trust_manager_getCurrentPublicKey(trust_manager_pt instance, char* key_filepath);
 
 /**
  * Obtains the most recent content of the cert.
  */
-extern int get_current_certificate_content(trust_manager_pt instance, char* content);
+extern int trust_manager_getCurrentCertificateContent(trust_manager_pt instance, char* content);
 
 /**
  * Obtains the most recent content of the full cert (incl keys).
  */
-extern int get_current_full_certificate_content(trust_manager_pt instance, char* content);
+extern int trust_manager_getCurrentFullCertificateContent(trust_manager_pt instance, char* content);
 
 /**
  * Obtains the most recent content of the ca cert.
  */
-extern int get_current_ca_certificate_content(trust_manager_pt instance, char* content);
+extern int trust_manager_getCurrentCaCertificateContent(trust_manager_pt instance, char* content);
 
 /**
  * Obtains the most recent content of the private key.
  */
-extern int get_current_private_key_content(trust_manager_pt instance, char* content);
+extern int trust_manager_getCurrentPrivateKeyContent(trust_manager_pt instance, char* content);
 
 /**
  * Obtains the most recent content of the public key.
  */
-extern int get_current_public_key_content(trust_manager_pt instance, char* content);
+extern int trust_manager_getCurrentPublicKeyContent(trust_manager_pt instance, char* content);
 
 #endif /* TRUST_MANAGER_IMPL_H_ */
