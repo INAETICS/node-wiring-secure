@@ -16,6 +16,12 @@
 #include "trust_manager_impl.h"
 #include "trust_manager_worker.h"
 
+#define TRUST_MANAGER_CA_HOST_PROPERTY_NAME				"trust.manager.ca.host"
+#define DEFAULT_TRUST_MANAGER_CA_HOST					"localhost"
+#define TRUST_MANAGER_CA_PORT_PROPERTY_NAME				"trust.manager.ca.port"
+#define DEFAULT_TRUST_MANAGER_CA_PORT					8888
+#define TRUST_MANAGER_KEY_STORAGE_PROPERTY_NAME			"trust.manager.key.storage"
+#define DEFAULT_TRUST_MANAGER_KEY_STORAGE				"/tmp/inaeticstrustmanager"
 #define TRUST_MANAGER_REFRESH_INTERVAL_PROPERTY_NAME	"trust.manager.refresh.interval"
 #define DEFAULT_TRUST_MANAGER_REFRESH_INTERVAL			5
 
@@ -32,8 +38,12 @@ struct bundle_instance {
 
 typedef struct bundle_instance *bundle_instance_pt;
 
+static char *bundleActivator_getCaHost(bundle_instance_pt bi, bundle_context_pt context);
+static int bundleActivator_getCaPort(bundle_instance_pt bi, bundle_context_pt context);
+static char *bundleActivator_getKeyStorage(bundle_instance_pt bi, bundle_context_pt context);
 static int bundleActivator_getRefreshInterval(bundle_instance_pt bi, bundle_context_pt context);
-static int bundleActivator_getProperty(bundle_instance_pt bi, bundle_context_pt context, char * propertyName, int defaultValue);
+static char* bundleActivator_getProperty(bundle_instance_pt bi, bundle_context_pt context, char* propertyName, char* defaultValue);
+static int bundleActivator_getPropertyInt(bundle_instance_pt bi, bundle_context_pt context, char * propertyName, int defaultValue);
 
 typedef struct trust_managerActivator *trust_manager_activator_pt;
 
@@ -55,6 +65,9 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
 
 	bundle_instance_pt bi = (bundle_instance_pt) userData;
 	int refreshInterval = bundleActivator_getRefreshInterval(bi, context);
+	int caPort = bundleActivator_getCaPort(bi, context);
+	char* caHost = bundleActivator_getCaHost(bi, context);
+	char* keyStorage = bundleActivator_getKeyStorage(bi, context);
 
 	trust_manager_activator_pt act = (trust_manager_activator_pt) userData;
 
@@ -65,8 +78,9 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
 		if (act->trust_managerService->instance) {
             // set all config for trust manager bundle
 			act->trust_managerService->instance->name = TRUST_MANAGER_SERVICE_NAME;
-            act->trust_managerService->instance->ca_host = "localhost";
-            act->trust_managerService->instance->ca_port = 8888;
+            act->trust_managerService->instance->ca_host = caHost;
+            act->trust_managerService->instance->ca_port = caPort;
+			act->trust_managerService->instance->key_storage = keyStorage;
             act->trust_managerService->instance->refresh_interval = refreshInterval;
 			act->trust_managerService->trust_manager_getCertificate = trust_manager_getCertificate;
 
@@ -104,11 +118,23 @@ celix_status_t bundleActivator_destroy(void * userData, bundle_context_pt  __att
 	return CELIX_SUCCESS;
 }
 
-static int bundleActivator_getRefreshInterval(bundle_instance_pt bi, bundle_context_pt context) {
-	return bundleActivator_getProperty(bi, context, TRUST_MANAGER_REFRESH_INTERVAL_PROPERTY_NAME, DEFAULT_TRUST_MANAGER_REFRESH_INTERVAL);
+static char *bundleActivator_getCaHost(bundle_instance_pt bi, bundle_context_pt context) {
+	return bundleActivator_getProperty(bi, context, TRUST_MANAGER_CA_HOST_PROPERTY_NAME, DEFAULT_TRUST_MANAGER_CA_HOST);
 }
 
-static int bundleActivator_getProperty(bundle_instance_pt bi, bundle_context_pt context, char* propertyName, int defaultValue) {
+static int bundleActivator_getCaPort(bundle_instance_pt bi, bundle_context_pt context) {
+	return bundleActivator_getPropertyInt(bi, context, TRUST_MANAGER_CA_PORT_PROPERTY_NAME, DEFAULT_TRUST_MANAGER_CA_PORT);
+}
+
+static char *bundleActivator_getKeyStorage(bundle_instance_pt bi, bundle_context_pt context) {
+	return bundleActivator_getProperty(bi, context, TRUST_MANAGER_KEY_STORAGE_PROPERTY_NAME, DEFAULT_TRUST_MANAGER_KEY_STORAGE);
+}
+
+static int bundleActivator_getRefreshInterval(bundle_instance_pt bi, bundle_context_pt context) {
+	return bundleActivator_getPropertyInt(bi, context, TRUST_MANAGER_REFRESH_INTERVAL_PROPERTY_NAME, DEFAULT_TRUST_MANAGER_REFRESH_INTERVAL);
+}
+
+static int bundleActivator_getPropertyInt(bundle_instance_pt bi, bundle_context_pt context, char* propertyName, int defaultValue) {
 	char *strValue = NULL;
 	int value;
 
@@ -128,5 +154,17 @@ static int bundleActivator_getProperty(bundle_instance_pt bi, bundle_context_pt 
 	}
 
 	return value;
+}
+
+static char* bundleActivator_getProperty(bundle_instance_pt bi, bundle_context_pt context, char* propertyName, char* defaultValue) {
+	char *strValue = NULL;
+
+	bundleContext_getProperty(context, propertyName, &strValue);
+	if (strValue != NULL) {
+		return strValue;
+	}
+	else {
+		return defaultValue;
+	}
 }
 

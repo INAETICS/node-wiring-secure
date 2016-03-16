@@ -24,6 +24,7 @@ struct trust_worker {
 
     volatile bool running;
 
+    char *key_storage;
     char *ca_host;
     int ca_port;
     int refresh_interval;
@@ -38,6 +39,7 @@ static int trustWorker_getProperty(bundle_context_pt context, char* propertyName
 static int trustWorker_rekey(void* data) {
     int res;
     trust_worker_pt worker = (trust_worker_pt) data;
+
     mbedtls_pk_context *key = (mbedtls_pk_context *) malloc(sizeof(mbedtls_pk_context));
     generate_keypair(key);
 
@@ -50,8 +52,8 @@ static int trustWorker_rekey(void* data) {
     char *privkey = malloc(4096);
     char* cert = malloc(4096);
 
-    get_next_public_key_file_path(pubkey_path);
-    get_next_full_certificate_file_path(cert_path_full);
+    get_next_public_key_file_path(pubkey_path, worker->key_storage);
+    get_next_full_certificate_file_path(cert_path_full, worker->key_storage);
     res = get_public_key(key, pubkey);
     if (!res) {
         write_pem_to_file(pubkey, pubkey_path, false);
@@ -60,7 +62,7 @@ static int trustWorker_rekey(void* data) {
         goto fail;
     }
 
-    get_next_private_key_file_path(privkey_path);
+    get_next_private_key_file_path(privkey_path, worker->key_storage);
     res = get_private_key(key, privkey);
     if (!res) {
         write_pem_to_file(privkey, privkey_path, false);
@@ -70,7 +72,7 @@ static int trustWorker_rekey(void* data) {
     }
 
     // request cert from ca
-    get_next_certificate_file_path(cert_path);
+    get_next_certificate_file_path(cert_path, worker->key_storage);
     res = csr_get_certificate(key, cert, worker->ca_host, worker->ca_port);
     if (!res) {
         write_pem_to_file(cert, cert_path, false);
@@ -101,14 +103,14 @@ static int refresh_ca_trust_r(void* data, mbedtls_x509_crt *ca_cert, int r)
     
     int ret;
     char *ca_cert_filename = malloc(1024);
-    ret = get_recent_ca_certificate(ca_cert_filename);
+    ret = get_recent_ca_certificate(ca_cert_filename, worker->key_storage);
     ret += load_certificate(ca_cert, ca_cert_filename);
 
     // verify ca cert
     if (ret != 0) {
         char *ca_cert_path = malloc(1024);
         char* ca_cert_buf = malloc(4096);
-        get_next_ca_certificate_file_path(ca_cert_path);
+        get_next_ca_certificate_file_path(ca_cert_path, worker->key_storage);
 
         if (!request_ca_certificate(ca_cert_buf, worker->ca_host, worker->ca_port)) {
             write_pem_to_file(ca_cert_buf, ca_cert_path, false);
@@ -142,7 +144,7 @@ static void* trustWorker_run(void* data) {
     while ((celixThreadMutex_lock(&worker->workerLock) == CELIX_SUCCESS) && worker->running) {
         int ret = 0;
 
-        if (check_create_keyfolder() != 0) {
+        if (check_create_keyfolder(worker->key_storage) != 0) {
             printf("\nERROR: can't create key storage folder.\n");
             fflush(stdout);
             exit(1);
@@ -156,7 +158,7 @@ static void* trustWorker_run(void* data) {
         }
 
         char *cert_filename = malloc(1024);
-        ret = get_recent_certificate(cert_filename);
+        ret = get_recent_certificate(cert_filename, worker->key_storage);
         ret += load_certificate(cert, cert_filename);
         // verify cert
         if (ret == 0) {
@@ -171,9 +173,9 @@ static void* trustWorker_run(void* data) {
 
 
         // clean old keys
-        get_recent_public_key(cert);
-        get_recent_private_key(cert);
-        get_recent_full_certificate(cert);
+        get_recent_public_key(cert, worker->key_storage);
+        get_recent_private_key(cert, worker->key_storage);
+        get_recent_full_certificate(cert, worker->key_storage);
 
         fail:
         free(cert_filename);
@@ -200,7 +202,10 @@ celix_status_t trustWorker_create(bundle_context_pt context, trust_worker_pt *wo
         return CELIX_BUNDLE_EXCEPTION;
     }
 
+
+
     (*worker) = calloc(1, sizeof(struct trust_worker));
+    (*worker)->key_storage = (*tm)->key_storage;
     (*worker)->ca_host = (*tm)->ca_host;
     (*worker)->ca_port = (*tm)->ca_port;
     (*worker)->refresh_interval = (*tm)->refresh_interval;

@@ -12,33 +12,31 @@
 
 #include "trust_manager_storage.h"
 
-#define KEY_STORAGE_FOLDER "/tmp/cinkeys"
-
-#define CA_CERT KEY_STORAGE_FOLDER "/ca.%d.pem"
+#define CA_CERT "%s/ca.%d.pem"
 #define CA_CERT_REGEX "^\\(ca\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
 
-#define PRIVATE_KEY KEY_STORAGE_FOLDER "/client_priv.%d.key"
+#define PRIVATE_KEY "%s/client_priv.%d.key"
 #define PRIVATE_KEY_REGEX "^\\(client_priv\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.key\\)\\{1\\}$"
 
-#define PUBLIC_KEY KEY_STORAGE_FOLDER "/client_pub.%d.key"
+#define PUBLIC_KEY "%s/client_pub.%d.key"
 #define PUBLIC_KEY_REGEX "^\\(client_pub\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.key\\)\\{1\\}$"
 
-#define CERTIFICATE KEY_STORAGE_FOLDER "/client.%d.pem"
+#define CERTIFICATE "%s/client.%d.pem"
 #define CERTIFICATE_REGEX "^\\(client\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
 
-#define CERTIFICATE_FULL KEY_STORAGE_FOLDER "/client_full.%d.pem"
+#define CERTIFICATE_FULL "%s/client_full.%d.pem"
 #define CERTIFICATE_FULL_REGEX "^\\(client_full\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
 // in a "readable" way: ^(client\\.){1}([[:digit:]]){10}(\\.pem){1}$
 
 /**
  * Checks if key folder exists and creates it if not.
  */
-int check_create_keyfolder()
+int check_create_keyfolder(char* storage_path)
 {
     struct stat st = {0};
 
-    if (stat(KEY_STORAGE_FOLDER, &st) == -1) {
-        return mkdir(KEY_STORAGE_FOLDER, 0700);
+    if (stat(storage_path, &st) == -1) {
+        return mkdir(storage_path, 0700);
     }
     return 0;
 }
@@ -46,20 +44,20 @@ int check_create_keyfolder()
 /**
  * Obtains the next certificate file path.
  */
-int get_next_certificate_file_path(char* filepath)
+int get_next_certificate_file_path(char* filepath, char* storage_path)
 {
     int stamp = ((int)time(NULL));
-    sprintf(filepath, CERTIFICATE, stamp);
+    sprintf(filepath, CERTIFICATE, storage_path, stamp);
     return 0;
 }
 
 /**
  * Obtains the next full certificate (incl keys) file path.
  */
-int get_next_full_certificate_file_path(char* filepath)
+int get_next_full_certificate_file_path(char* filepath, char* storage_path)
 {
     int stamp = ((int)time(NULL));
-    sprintf(filepath, CERTIFICATE_FULL, stamp);
+    sprintf(filepath, CERTIFICATE_FULL, storage_path, stamp);
     return 0;
 }
 
@@ -67,30 +65,30 @@ int get_next_full_certificate_file_path(char* filepath)
 /**
  * Obtains the next ca certificate file path.
  */
-int get_next_ca_certificate_file_path(char* filepath)
+int get_next_ca_certificate_file_path(char* filepath, char* storage_path)
 {
     int stamp = ((int)time(NULL));
-    sprintf(filepath, CA_CERT, stamp);
+    sprintf(filepath, CA_CERT, storage_path, stamp);
     return 0;
 }
 
 /**
  * Obtains the next private key file path.
  */
-int get_next_private_key_file_path(char* filepath)
+int get_next_private_key_file_path(char* filepath, char* storage_path)
 {
     int stamp = ((int)time(NULL));
-    sprintf(filepath, PRIVATE_KEY, stamp);
+    sprintf(filepath, PRIVATE_KEY, storage_path, stamp);
     return 0;
 }
 
 /**
  * Obtains the next public key file path.
  */
-int get_next_public_key_file_path(char* filepath)
+int get_next_public_key_file_path(char* filepath, char* storage_path)
 {
     int stamp = ((int)time(NULL));
-    sprintf(filepath, PUBLIC_KEY, stamp);
+    sprintf(filepath, PUBLIC_KEY, storage_path, stamp);
     return 0;
 }
 
@@ -165,9 +163,9 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
  * 2 - folder not found
  * 3 - failure
  */
-int get_recent_private_key(char* ca_cert_filepath)
+int get_recent_private_key(char* ca_cert_filepath, char* storage_path)
 {
-    return get_recent_file_by_regex(ca_cert_filepath, KEY_STORAGE_FOLDER, PRIVATE_KEY_REGEX);
+    return get_recent_file_by_regex(ca_cert_filepath, storage_path, PRIVATE_KEY_REGEX);
 }
 
 /**
@@ -178,9 +176,9 @@ int get_recent_private_key(char* ca_cert_filepath)
  * 2 - folder not found
  * 3 - failure
  */
-int get_recent_public_key(char* ca_cert_filepath)
+int get_recent_public_key(char* ca_cert_filepath, char* storage_path)
 {
-    return get_recent_file_by_regex(ca_cert_filepath, KEY_STORAGE_FOLDER, PUBLIC_KEY_REGEX);
+    return get_recent_file_by_regex(ca_cert_filepath, storage_path, PUBLIC_KEY_REGEX);
 }
 
 /**
@@ -191,9 +189,9 @@ int get_recent_public_key(char* ca_cert_filepath)
  * 2 - folder not found
  * 3 - failure
  */
-int get_recent_ca_certificate(char* ca_cert_filepath)
+int get_recent_ca_certificate(char* ca_cert_filepath, char* storage_path)
 {
-    return get_recent_file_by_regex(ca_cert_filepath, KEY_STORAGE_FOLDER, CA_CERT_REGEX);
+    return get_recent_file_by_regex(ca_cert_filepath, storage_path, CA_CERT_REGEX);
 }
 
 /**
@@ -204,9 +202,9 @@ int get_recent_ca_certificate(char* ca_cert_filepath)
  * 2 - folder not found
  * 3 - failure
  */
-int get_recent_certificate(char* certificate_filepath)
+int get_recent_certificate(char* certificate_filepath, char* storage_path)
 {
-    return get_recent_file_by_regex(certificate_filepath, KEY_STORAGE_FOLDER, CERTIFICATE_REGEX);
+    return get_recent_file_by_regex(certificate_filepath, storage_path, CERTIFICATE_REGEX);
 }
 
 /**
@@ -217,9 +215,9 @@ int get_recent_certificate(char* certificate_filepath)
  * 2 - folder not found
  * 3 - failure
  */
-int get_recent_full_certificate(char* certificate_filepath)
+int get_recent_full_certificate(char* certificate_filepath, char* storage_path)
 {
-    return get_recent_file_by_regex(certificate_filepath, KEY_STORAGE_FOLDER, CERTIFICATE_FULL_REGEX);
+    return get_recent_file_by_regex(certificate_filepath, storage_path, CERTIFICATE_FULL_REGEX);
 }
 
 /**
@@ -257,11 +255,11 @@ int read_file_contents(char* content, char* filepath)
 /**
  * Reads the content of the full cert (with pub & priv key).
  */
-int get_recent_full_certificate_content(char* content)
+int get_recent_full_certificate_content(char* content, char* storage_path)
 {
     int ret;
     char* filepath = malloc(256);
-    get_recent_full_certificate(filepath);
+    get_recent_full_certificate(filepath, storage_path);
     ret = read_file_contents(content, filepath);
     free(filepath);
     return ret;
@@ -270,11 +268,11 @@ int get_recent_full_certificate_content(char* content)
 /**
  * Reads the content of the cert.
  */
-int get_recent_certificate_content(char* content)
+int get_recent_certificate_content(char* content, char* storage_path)
 {
     int ret;
     char* filepath = malloc(256);
-    get_recent_certificate(filepath);
+    get_recent_certificate(filepath, storage_path);
     ret = read_file_contents(content, filepath);
     free(filepath);
     return ret;
@@ -283,11 +281,11 @@ int get_recent_certificate_content(char* content)
 /**
  * Reads the content of the ca cert.
  */
-int get_recent_ca_certificate_content(char* content)
+int get_recent_ca_certificate_content(char* content, char* storage_path)
 {
     int ret;
     char* filepath = malloc(256);
-    get_recent_ca_certificate(filepath);
+    get_recent_ca_certificate(filepath, storage_path);
     ret = read_file_contents(content, filepath);
     free(filepath);
     return ret;
@@ -296,11 +294,11 @@ int get_recent_ca_certificate_content(char* content)
 /**
  * Reads the content of the public key.
  */
-int get_recent_public_key_content(char* content)
+int get_recent_public_key_content(char* content, char* storage_path)
 {
     int ret;
     char* filepath = malloc(256);
-    get_recent_public_key(filepath);
+    get_recent_public_key(filepath, storage_path);
     ret = read_file_contents(content, filepath);
     free(filepath);
     return ret;
@@ -309,11 +307,11 @@ int get_recent_public_key_content(char* content)
 /**
  * Reads the content of the private key.
  */
-int get_recent_private_key_content(char* content)
+int get_recent_private_key_content(char* content, char* storage_path)
 {
     int ret;
     char* filepath = malloc(256);
-    get_recent_private_key(filepath);
+    get_recent_private_key(filepath, storage_path);
     ret = read_file_contents(content, filepath);
     free(filepath);
     return ret;
