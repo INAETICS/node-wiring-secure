@@ -12,6 +12,9 @@
 
 struct trust_manager {
 	char *name;
+    char *ca_host;
+    int ca_port;
+    int refresh_interval;
 };
 
 extern void trust_manager_getCertificate(trust_manager_pt instance);

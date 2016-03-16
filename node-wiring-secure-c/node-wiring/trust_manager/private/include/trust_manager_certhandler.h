@@ -32,12 +32,12 @@ int verify_certificate(mbedtls_x509_crt *certificate, mbedtls_x509_crt *ca_cert,
 /**
  * Request the ca certificate.
  */
-int request_ca_certificate(char *ca_certificate);
+int request_ca_certificate(char *ca_certificate, char* ca_host, int ca_port);
 
 /**
  * Perform CSR and retreive certificate.
  */
-int csr_get_certificate(mbedtls_pk_context* key, char* certificate);
+int csr_get_certificate(mbedtls_pk_context* key, char* certificate, char *ca_host, int ca_port);
 
 
 #endif //CACLIENT_CACLIENT_CERTIFICATEREQUESTER_H

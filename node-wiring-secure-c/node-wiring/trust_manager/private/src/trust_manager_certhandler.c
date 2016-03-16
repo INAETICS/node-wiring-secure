@@ -8,9 +8,10 @@
 #define mbedtls_printf     printf
 #endif
 
-#define CFSSL_SIGN_API_URL "http://localhost:8888/api/v1/cfssl/sign"
-#define CFSSL_CA_CERT_URL "http://localhost:8888/api/v1/cfssl/info"
+#define CFSSL_SIGN_API_URL "http://%s:%d/api/v1/cfssl/sign"
+#define CFSSL_CA_CERT_URL "http://%s:%d/api/v1/cfssl/info"
 #define REFRESH_EARLY_THRESHOLD_SECONDS 30
+#define CFSSL_CA_ROOT_CERT_REQUST "{}"
 
 #define JSON_TYPE_HEADER "Content-Type: application/json"
 
@@ -109,21 +110,25 @@ int cfssl_ca_certget_wrapper(char* certificate, char body[], char url[])
 /**
  * Retreive ca cert.
  */
-int request_ca_certificate(char *ca_certificate)
+int request_ca_certificate(char *ca_certificate, char *ca_host, int ca_port)
 {
-    return cfssl_ca_certget_wrapper(ca_certificate, "{}", CFSSL_CA_CERT_URL);
+    char url[512];
+    sprintf(url, CFSSL_CA_CERT_URL, ca_host, ca_port);
+    return cfssl_ca_certget_wrapper(ca_certificate, CFSSL_CA_ROOT_CERT_REQUST, url);
 }
 
 /**
  * Get signed certificate from cfssl api
  */
-int csr_get_certificate(mbedtls_pk_context *key, char *certificate)
+int csr_get_certificate(mbedtls_pk_context *key, char *certificate, char *ca_host, int ca_port)
 {
     int res;
     // generate the csr
     char *csr = malloc(1024);
     generate_csr(key, csr);
-    res = cfssl_ca_certget_wrapper(certificate, csr, CFSSL_SIGN_API_URL);
+    char url[512];
+    sprintf(url, CFSSL_SIGN_API_URL, ca_host, ca_port);
+    res = cfssl_ca_certget_wrapper(certificate, csr, url);
     free(csr);
     return res;
 }

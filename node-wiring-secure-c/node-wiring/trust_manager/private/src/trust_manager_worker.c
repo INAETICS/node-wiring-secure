@@ -10,24 +10,34 @@
 #include "stdlib.h"
 #include <mbedtls/pk.h>
 #include <mbedtls/x509_crt.h>
+#include "trust_manager_service.h"
 #include "trust_manager_certhandler.h"
 #include "trust_manager_keygen.h"
 #include "trust_manager_storage.h"
 
-#define DEFAULT_WORKER_SLEEP 1
+#define TRUST_MANAGER_REFRESH_INTERVAL_PROPERTY_NAME	"trust.manager.refresh.interval"
+#define DEFAULT_TRUST_MANAGER_REFRESH_INTERVAL			1
 
 struct trust_worker {
     celix_thread_mutex_t workerLock;
     celix_thread_t workerThread;
 
     volatile bool running;
+
+    char *ca_host;
+    int ca_port;
+    int refresh_interval;
 };
+
+static int trustWorker_getRefreshInterval(bundle_context_pt context);
+static int trustWorker_getProperty(bundle_context_pt context, char* propertyName, int defaultValue);
 
 /**
  *
  */
-static int trustWorker_rekey(void) {
+static int trustWorker_rekey(void* data) {
     int res;
+    trust_worker_pt worker = (trust_worker_pt) data;
     mbedtls_pk_context *key = (mbedtls_pk_context *) malloc(sizeof(mbedtls_pk_context));
     generate_keypair(key);
 
@@ -61,7 +71,7 @@ static int trustWorker_rekey(void) {
 
     // request cert from ca
     get_next_certificate_file_path(cert_path);
-    res = csr_get_certificate(key, cert);
+    res = csr_get_certificate(key, cert, worker->ca_host, worker->ca_port);
     if (!res) {
         write_pem_to_file(cert, cert_path, false);
         write_pem_to_file(cert, cert_path_full, true);
@@ -85,8 +95,10 @@ static int trustWorker_rekey(void) {
 /**
  * Recusrive trust reload. r specifies tries.
  */
-static int refresh_ca_trust_r(mbedtls_x509_crt *ca_cert, int r)
+static int refresh_ca_trust_r(void* data, mbedtls_x509_crt *ca_cert, int r)
 {
+    trust_worker_pt worker = (trust_worker_pt) data;
+    
     int ret;
     char *ca_cert_filename = malloc(1024);
     ret = get_recent_ca_certificate(ca_cert_filename);
@@ -98,14 +110,14 @@ static int refresh_ca_trust_r(mbedtls_x509_crt *ca_cert, int r)
         char* ca_cert_buf = malloc(4096);
         get_next_ca_certificate_file_path(ca_cert_path);
 
-        if (!request_ca_certificate(ca_cert_buf)) {
+        if (!request_ca_certificate(ca_cert_buf, worker->ca_host, worker->ca_port)) {
             write_pem_to_file(ca_cert_buf, ca_cert_path, false);
         }
         free(ca_cert_buf);
         free(ca_cert_path);
 
         if (r >= 0) {
-            refresh_ca_trust_r(ca_cert, --r);
+            refresh_ca_trust_r(data, ca_cert, --r);
         }
     }
     return ret;
@@ -114,12 +126,10 @@ static int refresh_ca_trust_r(mbedtls_x509_crt *ca_cert, int r)
 /**
  * Reload the trust.
  */
-static int refresh_ca_trust(mbedtls_x509_crt *ca_cert)
+static int refresh_ca_trust(void* data, mbedtls_x509_crt *ca_cert)
 {
-    return refresh_ca_trust_r(ca_cert, 2);
+    return refresh_ca_trust_r(data, ca_cert, 2);
 }
-
-
 
 
 /*
@@ -141,7 +151,7 @@ static void* trustWorker_run(void* data) {
         mbedtls_x509_crt *ca_cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
         mbedtls_x509_crt *cert = (mbedtls_x509_crt*) malloc(sizeof(mbedtls_x509_crt));
 
-        if (refresh_ca_trust(ca_cert) != 0) {
+        if (refresh_ca_trust(data, ca_cert) != 0) {
             goto fail;
         }
 
@@ -151,12 +161,12 @@ static void* trustWorker_run(void* data) {
         // verify cert
         if (ret == 0) {
             if (verify_certificate(cert, ca_cert, 0) != 0) {
-                trustWorker_rekey();
+                trustWorker_rekey(data);
             } else {
                 goto fail;
             }
         } else {
-            trustWorker_rekey();
+            trustWorker_rekey(data);
         }
 
 
@@ -173,7 +183,7 @@ static void* trustWorker_run(void* data) {
         // unlock
         celixThreadMutex_unlock(&worker->workerLock);
 
-        sleep(DEFAULT_WORKER_SLEEP);
+        sleep(worker->refresh_interval);
     }
 
     if (worker->running == false) {
@@ -183,7 +193,7 @@ static void* trustWorker_run(void* data) {
     return NULL;
 }
 
-celix_status_t trustWorker_create(bundle_context_pt context, trust_worker_pt *worker) {
+celix_status_t trustWorker_create(bundle_context_pt context, trust_worker_pt *worker, trust_manager_pt *tm) {
     celix_status_t status = CELIX_SUCCESS;
 
     if (worker == NULL) {
@@ -191,6 +201,9 @@ celix_status_t trustWorker_create(bundle_context_pt context, trust_worker_pt *wo
     }
 
     (*worker) = calloc(1, sizeof(struct trust_worker));
+    (*worker)->ca_host = (*tm)->ca_host;
+    (*worker)->ca_port = (*tm)->ca_port;
+    (*worker)->refresh_interval = (*tm)->refresh_interval;
 
     if (*worker) {
         if ((status = celixThreadMutex_create(&(*worker)->workerLock, NULL)) != CELIX_SUCCESS) {
@@ -233,4 +246,30 @@ celix_status_t trustWorker_destroy(trust_worker_pt watcher) {
     free(CELIX_SUCCESS);
 
     return status;
+}
+
+static int trustWorker_getRefreshInterval(bundle_context_pt context) {
+    return trustWorker_getProperty(context, TRUST_MANAGER_REFRESH_INTERVAL_PROPERTY_NAME, DEFAULT_TRUST_MANAGER_REFRESH_INTERVAL);
+}
+
+static int trustWorker_getProperty(bundle_context_pt context, char* propertyName, int defaultValue) {
+    char *strValue = NULL;
+    int value;
+
+    bundleContext_getProperty(context, propertyName, &strValue);
+    if (strValue != NULL) {
+        char* endptr = strValue;
+
+        errno = 0;
+        value = strtol(strValue, &endptr, 10);
+        if (*endptr || errno != 0) {
+//			logHelper_log(bi->loghelper, OSGI_LOGSERVICE_WARNING, "incorrect format for %s", propertyName);
+            value = defaultValue;
+        }
+    }
+    else {
+        value = defaultValue;
+    }
+
+    return value;
 }

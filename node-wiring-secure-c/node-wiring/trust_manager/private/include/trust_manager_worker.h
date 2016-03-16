@@ -4,6 +4,7 @@
 
 #include <celix_errno.h>
 #include <bundle_context.h>
+#include "trust_manager_service.h"
 #include "trust_manager_caresponse.h"
 
 #ifndef THALESCWIRING_TRUST_MANAGER_WORKER_H
@@ -13,5 +14,5 @@
 
 typedef struct trust_worker *trust_worker_pt;
 
-celix_status_t trustWorker_create(bundle_context_pt context, trust_worker_pt *worker);
+celix_status_t trustWorker_create(bundle_context_pt context, trust_worker_pt *worker, trust_manager_pt *tm);
 celix_status_t trustWorker_destroy(trust_worker_pt worker);

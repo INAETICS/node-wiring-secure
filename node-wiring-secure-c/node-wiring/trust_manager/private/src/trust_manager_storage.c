@@ -14,19 +14,19 @@
 
 #define KEY_STORAGE_FOLDER "/tmp/cinkeys"
 
+#define CA_CERT KEY_STORAGE_FOLDER "/ca.%d.pem"
 #define CA_CERT_REGEX "^\\(ca\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
-#define CA_CERT "/tmp/cinkeys/ca.%d.pem"
 
+#define PRIVATE_KEY KEY_STORAGE_FOLDER "/client_priv.%d.key"
 #define PRIVATE_KEY_REGEX "^\\(client_priv\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.key\\)\\{1\\}$"
-#define PRIVATE_KEY "/tmp/cinkeys/client_priv.%d.key"
 
+#define PUBLIC_KEY KEY_STORAGE_FOLDER "/client_pub.%d.key"
 #define PUBLIC_KEY_REGEX "^\\(client_pub\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.key\\)\\{1\\}$"
-#define PUBLIC_KEY "/tmp/cinkeys/client_pub.%d.key"
 
-#define CERTIFICATE "/tmp/cinkeys/client.%d.pem"
+#define CERTIFICATE KEY_STORAGE_FOLDER "/client.%d.pem"
 #define CERTIFICATE_REGEX "^\\(client\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
 
-#define CERTIFICATE_FULL "/tmp/cinkeys/client_full.%d.pem"
+#define CERTIFICATE_FULL KEY_STORAGE_FOLDER "/client_full.%d.pem"
 #define CERTIFICATE_FULL_REGEX "^\\(client_full\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
 // in a "readable" way: ^(client\\.){1}([[:digit:]]){10}(\\.pem){1}$
 
@@ -107,7 +107,6 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
     struct dirent *dir;
     d = opendir(folder);
 
-//    char certlist[1024][1024];
     regex_t regex;
     int reti;
 
@@ -121,7 +120,6 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
         }
 
         unsigned char buffer_priv[1024];
-//        int i=0;
         int skip=2;
         int found=0;
         while ((dir = readdir(d)) != NULL)
@@ -141,7 +139,6 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
                         skip--;
                     }
                 }
-//                strcpy(certlist[i++], filepath);
             } else if (reti == REG_NOMATCH) {
                 // nothing, no match
             } else {
