@@ -18,6 +18,8 @@
 #include "remote_service_admin.h"
 #include "remote_service_admin_inaetics.h"
 
+#include "trust_manager_service.h"
+
 #include "wiring_admin.h"
 #include "wiring_admin_impl.h"
 #include "wiring_common_utils.h"
@@ -130,28 +132,44 @@ celix_status_t wiringAdmin_startWebserver(bundle_context_pt context, wiring_admi
     memset(&callbacks, 0, sizeof(callbacks));
     callbacks.begin_request = wiringAdmin_callback;
 
+    char full_cert[1024];
+    char ca_cert[1024];
+    service_reference_pt ref = NULL;
+    celix_status_t tr_status = bundleContext_getServiceReference(context, (char *) TRUST_MANAGER_SERVICE_NAME, &ref);
+    if (tr_status == CELIX_SUCCESS) {
+        trust_manager_service_pt trust_manager = NULL;
+        bundleContext_getService(context, ref, (void *) &trust_manager);
+        if (trust_manager == NULL) {
+            printf("\nTRUST MANAGER NOT AVAILABLE!\n");
+        } else {
+            (*trust_manager->trust_manager_getCurrentFullCertificate)(trust_manager->instance, full_cert);
+            (*trust_manager->trust_manager_getCurrentCaCertificate)(trust_manager->instance, ca_cert);
+        }
+    }
+
     do {
         // secure port for civetweb config
         char securePort[10];
         snprintf(&securePort[0], 6, "%ss", port);
         char newPort[10];
 
-        if (access( "/tmp/cinkeys/server.pem", F_OK ) == -1) {
+        if (access( full_cert, F_OK ) == -1) {
             fprintf(stderr, "could not load server pem");
             exit(1);
         }
 
-        if (access( "/tmp/cinkeys/ca.pem", F_OK ) == -1) {
+        if (access( ca_cert, F_OK ) == -1) {
             fprintf(stderr, "could not load ca certificate");
             exit(1);
         }
 
         const char *options[] = {
                 "listening_ports", securePort,
-                "ssl_certificate", "/tmp/cinkeys/server.pem",
+                "ssl_certificate", full_cert,
                 "ssl_verify_peer", "yes",
 //                "ssl_default_verify_paths", "no",
-                "ssl_ca_file", "/tmp/cinkeys/ca.pem",
+                "ssl_ca_file", ca_cert,
+                "ssl_short_trust", "yes",
                 NULL };
 
         (*admin)->ctx = mg_start(&callbacks, (*admin), options);
@@ -547,6 +565,7 @@ celix_status_t wiringAdmin_removeImportedWiringEndpoint(wiring_admin_pt admin, w
 }
 
 static celix_status_t wiringAdmin_send(wiring_send_service_pt sendService, char *request, char **reply, int* replyStatus) {
+    bundle_context_pt context = sendService->admin->context;
 
     celix_status_t status = CELIX_SUCCESS;
 
@@ -576,12 +595,29 @@ static celix_status_t wiringAdmin_send(wiring_send_service_pt sendService, char 
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
 
+        char cert[1024];
+        char key[1024];
+        char ca_cert[1024];
+        service_reference_pt ref = NULL;
+        celix_status_t tr_status = bundleContext_getServiceReference(context, (char *) TRUST_MANAGER_SERVICE_NAME, &ref);
+        if (tr_status == CELIX_SUCCESS) {
+            trust_manager_service_pt trust_manager = NULL;
+            bundleContext_getService(context, ref, (void *) &trust_manager);
+            if (trust_manager == NULL) {
+                printf("\nTRUST MANAGER NOT AVAILABLE!\n");
+            } else {
+                (*trust_manager->trust_manager_getCurrentCertificate)(trust_manager->instance, cert);
+                (*trust_manager->trust_manager_getCurrentPrivateKey)(trust_manager->instance, key);
+                (*trust_manager->trust_manager_getCurrentCaCertificate)(trust_manager->instance, ca_cert);
+            }
+        }
+
         // TODO: configure this through certificate service
-        curl_easy_setopt(curl, CURLOPT_SSLCERT, "/tmp/cinkeys/ca.pem");
+        curl_easy_setopt(curl, CURLOPT_SSLCERT, cert);
         curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, default_tls_cert_key_type);
-        curl_easy_setopt(curl, CURLOPT_SSLKEY, "/tmp/cinkeys/ca-key.pem");
+        curl_easy_setopt(curl, CURLOPT_SSLKEY, key);
         curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, default_tls_cert_key_type);
-        curl_easy_setopt(curl, CURLOPT_CAINFO, "/tmp/cinkeys/ca.pem");
+        curl_easy_setopt(curl, CURLOPT_CAINFO, ca_cert);
         curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
 
 

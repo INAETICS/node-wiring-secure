@@ -142,7 +142,7 @@ int get_public_key(mbedtls_pk_context* key, char* key_pair)
     int ret;
     unsigned char buffer_priv[4096];
     memset( buffer_priv, 0, 4096 );
-    ret = mbedtls_pk_write_key_pem( key, buffer_priv, sizeof(buffer_priv) );
+    ret = mbedtls_pk_write_pubkey_pem( key, buffer_priv, sizeof(buffer_priv) );
     if( ret != 0 )
     {
         mbedtls_printf( " failed\n  !  mbedtls_pk_write_key_pem returned %d", ret );
@@ -160,7 +160,7 @@ int get_private_key(mbedtls_pk_context* key, char* private_key)
     int ret;
     unsigned char buffer_priv[4096];
     memset( buffer_priv, 0, 4096 );
-    ret = mbedtls_pk_write_pubkey_pem( key, buffer_priv, sizeof(buffer_priv) );
+    ret = mbedtls_pk_write_key_pem( key, buffer_priv, sizeof(buffer_priv) );
     if( ret != 0 )
     {
         mbedtls_printf( " failed\n  !  mbedtls_pk_write_key_pem returned %d", ret );
