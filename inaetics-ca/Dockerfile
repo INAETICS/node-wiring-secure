@@ -1,4 +1,4 @@
-FROM golang:1.5
+FROM golang:1.6
 
 ENV USER root
 
@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 MAINTAINER Inaetics Project Team Secure Wiring
 
-RUN go get github.com/cloudflare/cfssl/...
+RUN go get -u github.com/cloudflare/cfssl/cmd/...
 
 WORKDIR /etc/cfssl
 
@@ -23,4 +23,5 @@ ADD inaetics-certs /etc/cfssl
 # expose and run
 EXPOSE 8888
 ENTRYPOINT ["cfssl"]
-CMD ["serve", "-address=0.0.0.0"]
+#CMD ["serve", "-adress=-0.0.0.0"]
+CMD ["serve", "-address=0.0.0.0", "-ca=ca.pem", "-ca-key=ca-key.pem", "-config=ca-config.json"]

@@ -1,1 +1,15 @@
-{"signing":{"default":{"expiry":"43800h","usages":["signing","key encipherment","server auth","client auth"]}}}
+{
+  "signing": {
+    "default": {
+      "expiry": "7m",
+      "__backdate_comment": "The cfssl api requires a 'backdate'. This will prevent cert expiry overlapping. Add this time to the expiry time. In this example, the certificates are valid for 2 minutes.",
+      "backdate": "5m",
+      "usages": [
+        "signing",
+        "key encipherment",
+        "server auth",
+        "client auth"
+      ]
+    }
+  }
+}
