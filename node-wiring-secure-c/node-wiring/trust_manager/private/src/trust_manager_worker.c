@@ -57,7 +57,7 @@ static int trustWorker_rekey(void* data) {
     res = get_public_key(key, pubkey);
     if (!res) {
         write_pem_to_file(pubkey, pubkey_path, false);
-        write_pem_to_file(pubkey, cert_path_full, true);
+        write_pem_to_file(pubkey, "/tmp/inaeticstrustmanager/client_full.pem.next", false);
     } else {
         goto fail;
     }
@@ -66,7 +66,7 @@ static int trustWorker_rekey(void* data) {
     res = get_private_key(key, privkey);
     if (!res) {
         write_pem_to_file(privkey, privkey_path, false);
-        write_pem_to_file(privkey, cert_path_full, true);
+        write_pem_to_file(privkey, "/tmp/inaeticstrustmanager/client_full.pem.next", true);
     } else {
         goto fail;
     }
@@ -76,8 +76,13 @@ static int trustWorker_rekey(void* data) {
     res = csr_get_certificate(key, cert, worker->ca_host, worker->ca_port);
     if (!res) {
         write_pem_to_file(cert, cert_path, false);
-        write_pem_to_file(cert, cert_path_full, true);
+        write_pem_to_file(cert, "/tmp/inaeticstrustmanager/client_full.pem.next", true);
     } else {
+        goto fail;
+    }
+
+    res = rename("/tmp/inaeticstrustmanager/client_full.pem.next", cert_path_full);
+    if (res) {
         goto fail;
     }
 

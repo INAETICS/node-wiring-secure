@@ -54,5 +54,6 @@ deploy("wiring_rsa_server" BUNDLES
         org.inaetics.wiring_topology_manager.WiringTopologyManager
         org.inaetics.wiring_admin_secure.WiringAdmin
         org.inaetics.remote_service_admin
+        inaetics_trust_manager
         )
 

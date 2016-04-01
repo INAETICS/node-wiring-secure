@@ -3,6 +3,7 @@
 //
 #include <mbedtls/rsa.h>
 #include <stdbool.h>
+#include <sys/file.h>
 
 #include "trust_manager_keygen.h"
 
@@ -186,16 +187,26 @@ void removeChar(char *str, char garbage)
 /**
  * Write pem to file.
  */
-int write_pem_to_file(char* pem, char filename[], bool append)
-{
+int write_pem_to_file(char* pem, char filename[], bool append) {
     char *apnd = (append) ? "a" : "w";
     FILE *file = fopen(filename, apnd);
-
-    int results = fputs(pem, file);
-    if (results == EOF) {
-        return 1;
-    }
+    flock(file, LOCK_EX);
+//    if (flock(file, LOCK_SH) < 0) {
+//        return 1;
+//    } else {
+        int results = fputs(pem, file);
+        if (results == EOF) {
+            return 1;
+        }
+//    }
+    flock(file, LOCK_UN);
     fclose(file);
+    return 0;
+}
+
+int rename_pem(char* old, char* new)
+{
+    return rename(old, new);
 }
 
 /**

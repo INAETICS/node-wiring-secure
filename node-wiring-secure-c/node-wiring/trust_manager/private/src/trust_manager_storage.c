@@ -12,20 +12,20 @@
 
 #include "trust_manager_storage.h"
 
-#define CA_CERT "%s/ca.%d.pem"
-#define CA_CERT_REGEX "^\\(ca\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
+#define CA_CERT "%s/ca.pem"
+#define CA_CERT_REGEX "^\\(ca\\.pem\\)\\{1\\}$"
 
-#define PRIVATE_KEY "%s/client_priv.%d.key"
-#define PRIVATE_KEY_REGEX "^\\(client_priv\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.key\\)\\{1\\}$"
+#define PRIVATE_KEY "%s/client_priv.key"
+#define PRIVATE_KEY_REGEX "^\\(client_priv\\.key\\)\\{1\\}$"
 
-#define PUBLIC_KEY "%s/client_pub.%d.key"
-#define PUBLIC_KEY_REGEX "^\\(client_pub\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.key\\)\\{1\\}$"
+#define PUBLIC_KEY "%s/client_pub.key"
+#define PUBLIC_KEY_REGEX "^\\(client_pub\\.key\\)\\{1\\}$"
 
-#define CERTIFICATE "%s/client.%d.pem"
-#define CERTIFICATE_REGEX "^\\(client\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
+#define CERTIFICATE "%s/client.pem"
+#define CERTIFICATE_REGEX "^\\(client\\.pem\\)\\{1\\}$"
 
-#define CERTIFICATE_FULL "%s/client_full.%d.pem"
-#define CERTIFICATE_FULL_REGEX "^\\(client_full\\.\\)\\{1\\}\\([[:digit:]]\\)\\{10\\}\\(\\.pem\\)\\{1\\}$"
+#define CERTIFICATE_FULL "%s/client_full.pem"
+#define CERTIFICATE_FULL_REGEX "^\\(client_full\\.pem\\)\\{1\\}$"
 // in a "readable" way: ^(client\\.){1}([[:digit:]]){10}(\\.pem){1}$
 
 /**
@@ -46,8 +46,7 @@ int check_create_keyfolder(char* storage_path)
  */
 int get_next_certificate_file_path(char* filepath, char* storage_path)
 {
-    int stamp = ((int)time(NULL));
-    sprintf(filepath, CERTIFICATE, storage_path, stamp);
+    sprintf(filepath, CERTIFICATE, storage_path);
     return 0;
 }
 
@@ -56,8 +55,7 @@ int get_next_certificate_file_path(char* filepath, char* storage_path)
  */
 int get_next_full_certificate_file_path(char* filepath, char* storage_path)
 {
-    int stamp = ((int)time(NULL));
-    sprintf(filepath, CERTIFICATE_FULL, storage_path, stamp);
+    sprintf(filepath, CERTIFICATE_FULL, storage_path);
     return 0;
 }
 
@@ -67,8 +65,7 @@ int get_next_full_certificate_file_path(char* filepath, char* storage_path)
  */
 int get_next_ca_certificate_file_path(char* filepath, char* storage_path)
 {
-    int stamp = ((int)time(NULL));
-    sprintf(filepath, CA_CERT, storage_path, stamp);
+    sprintf(filepath, CA_CERT, storage_path);
     return 0;
 }
 
@@ -77,8 +74,7 @@ int get_next_ca_certificate_file_path(char* filepath, char* storage_path)
  */
 int get_next_private_key_file_path(char* filepath, char* storage_path)
 {
-    int stamp = ((int)time(NULL));
-    sprintf(filepath, PRIVATE_KEY, storage_path, stamp);
+    sprintf(filepath, PRIVATE_KEY, storage_path);
     return 0;
 }
 
@@ -87,8 +83,7 @@ int get_next_private_key_file_path(char* filepath, char* storage_path)
  */
 int get_next_public_key_file_path(char* filepath, char* storage_path)
 {
-    int stamp = ((int)time(NULL));
-    sprintf(filepath, PUBLIC_KEY, storage_path, stamp);
+    sprintf(filepath, PUBLIC_KEY, storage_path);
     return 0;
 }
 
@@ -129,6 +124,8 @@ int get_recent_file_by_regex(char* filepath, char folder[], char reg_expression[
                 if (found == 0) {
                     // set on first match...
                     strcpy(filepath, &buffer_priv);
+//                    printf("\n%s\n", filepath);
+//                    fflush(stdout);
                     found = 1;
                 } else {
                     if (skip <= 0) {
