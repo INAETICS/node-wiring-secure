@@ -5,6 +5,7 @@ package org.inaetics.wiring.admin.https;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.inaetics.certificateservice.api.CertificateService;
 import org.inaetics.truststorage.TrustStorageService;
 import org.inaetics.wiring.WiringAdmin;
 import org.inaetics.wiring.base.AbstractComponent;
@@ -32,6 +33,7 @@ public final class WiringAdminFactory extends AbstractComponent implements Servi
     
     private volatile TrustStorageService m_trustStorageService;
     private volatile HttpService m_httpService;
+    private volatile CertificateService m_certificateService;
     
     private volatile boolean m_started = false;
 
@@ -50,10 +52,12 @@ public final class WiringAdminFactory extends AbstractComponent implements Servi
     	m_started = true;
         
     	super.startComponent();
-    	
+    	m_clientEndpointFactory.setTrustStorageService(m_trustStorageService);
+    	m_certificateService.forceTrustRefresh();
         m_serverEndpointHandler.start();
         m_clientEndpointFactory.start();
         m_wiringAdminListenerhandler.start();
+        System.out.println(m_trustStorageService == null);
     }
 
     @Override
@@ -114,6 +118,7 @@ public final class WiringAdminFactory extends AbstractComponent implements Servi
     
     TrustStorageService getTrustStorageService()
     {
+    	System.out.println("getStrustService: " + m_trustStorageService == null );
     	return m_trustStorageService;
     }
 

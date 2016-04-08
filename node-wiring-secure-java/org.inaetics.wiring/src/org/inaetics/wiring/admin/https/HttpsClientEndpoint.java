@@ -6,16 +6,19 @@ package org.inaetics.wiring.admin.https;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.inaetics.wiring.base.IOUtil.closeSilently;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.security.KeyStore;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -95,34 +98,40 @@ public final class HttpsClientEndpoint {
         	
         	URL url = new URL(m_endpoint.getProperty(HttpsWiringEndpointProperties.URL));
             connection = (HttpsURLConnection) url.openConnection();
-            
-            final String truststoreFileName = m_configuration.getTruststoreFileName();
-            final char[] truststorePassword = m_configuration.getTruststorePassword().toCharArray();
-            final String truststoreType = m_configuration.getTruststoreType();
-            final String sslContextInstance = "TLS";
-            
-            // key store stuff
-            InputStream trustStoreStream = new FileInputStream(truststoreFileName);
-            KeyStore trustStore = KeyStore.getInstance(truststoreType);
-            trustStore.load(trustStoreStream, truststorePassword);
-            trustStoreStream.close();
-            
-            
-            KeyStore keyStore = m_trustService.getKeyStore();
-            
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(keyStore, ("changeit").toCharArray());
            
-            
-            // trust manager factory
-            // TODO configurable algorithm
+            // trust
+            KeyStore trustStore = m_trustService.getTrustStore();
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
     		tmf.init(trustStore);
-    		SSLContext ctx = SSLContext.getInstance(sslContextInstance);
+    		
+    		// keys
+    		KeyStore keyStore = m_trustService.getKeyStore();
+    		final char[] keyStoreKeyPassword = m_trustService.getKeyStoreKeyPassword();
+    		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    		kmf.init(keyStore, keyStoreKeyPassword);
+    		
+            HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+            	private static final String HOSTNAME_VERIFICATION_PATTERN = "\\A(CN=){1}(%s){1}(,ST){1}(.)*\\Z";
+            	
+				@Override
+				public boolean verify(String hostname, SSLSession session) {
+					try {
+						Pattern verifyPattern = Pattern.compile(String.format(HOSTNAME_VERIFICATION_PATTERN, hostname));						
+						String peerPrincipal = session.getPeerPrincipal().getName();
+						Matcher matcher = verifyPattern.matcher(peerPrincipal);
+						return matcher.matches();
+					} catch (Exception e) {
+						return false;
+					}
+				}
+            };
+    		
+    		SSLContext ctx = SSLContext.getInstance("TLS");
     		ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+    		
     		SSLSocketFactory sslFactory = ctx.getSocketFactory();
-            
             connection.setSSLSocketFactory(sslFactory);
+            connection.setHostnameVerifier(hostnameVerifier);
             connection.setRequestMethod("POST");
             connection.setUseCaches(false);
             connection.setDoOutput(true);
@@ -130,7 +139,10 @@ public final class HttpsClientEndpoint {
             connection.setReadTimeout(m_configuration.getReadTimeout());
             connection.setRequestProperty("Content-Type", "text/plain;charset=utf-8");
             connection.connect();
+            System.out.println(connection.getCipherSuite());
             outputStream = connection.getOutputStream();
+            
+            System.out.println(message.getBytes("UTF-8"));
             
             outputStream.write(message.getBytes("UTF-8"));
             outputStream.flush();

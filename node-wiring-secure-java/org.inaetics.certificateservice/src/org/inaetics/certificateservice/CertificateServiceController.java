@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -60,6 +61,40 @@ public class CertificateServiceController {
 			_instance = new CertificateServiceController(trustStorage);
 		}
 		return _instance;
+	}
+	
+	protected static CertificateServiceController getInstance() throws IllegalAccessException {
+		if (_instance == null) {
+			throw new IllegalAccessException();
+		}
+		return _instance;
+	}
+	
+	private String aggregatePodPrincipalString() {
+		String hostAddress = CertificateServiceController.cmdExec("hostname -i");
+		hostAddress = hostAddress.trim();
+		hostAddress = hostAddress.replace("\n", "");
+		hostAddress = hostAddress.replace("\"", "");
+	    return CaConfig.PRINCIPAL_STRING.replace(
+	            CaConfig.PRINCIPAL_STRING_CN_SELECTER, hostAddress);
+	}
+	
+	public static String cmdExec(String cmdLine) {
+	    String line;
+	    String output = "";
+	    try {
+	        Process p = Runtime.getRuntime().exec(cmdLine);
+	        BufferedReader input = new BufferedReader
+	            (new InputStreamReader(p.getInputStream()));
+	        while ((line = input.readLine()) != null) {
+	            output += (line + '\n');
+	        }
+	        input.close();
+	        }
+	    catch (Exception ex) {
+	        ex.printStackTrace();
+	    }
+	    return output;
 	}
 
 	protected void checkAndUpdateCertificates() {
@@ -160,7 +195,7 @@ public class CertificateServiceController {
 				switch (statusCode) {
 				case HttpURLConnection.HTTP_OK:
 					X509Certificate cert = parseCAResponse(connection.getInputStream());
-					if (cert != null) {
+					if (cert != null && trustStorage != null) {
 						System.out.println("cert fetched");
 						trustStorage.storeSignedKeyPair(cert, pair.getPrivate());
 
@@ -211,7 +246,7 @@ public class CertificateServiceController {
 			switch (statusCode) {
 			case HttpURLConnection.HTTP_OK:
 				X509Certificate caCert = parseCAResponse(connection.getInputStream());
-				if (caCert != null) {
+				if (caCert != null && trustStorage !=null) {
 					trustStorage.storeRootCaCert(caCert);
 					System.out.println("server cert fetched");
 				}
@@ -236,7 +271,8 @@ public class CertificateServiceController {
 	private PKCS10CertificationRequest createCSR(KeyPair pair) throws OperatorCreationException {
 		PublicKey publicKey = pair.getPublic();
 		PrivateKey privateKey = pair.getPrivate();
-		X500Principal principal = new X500Principal(CaConfig.PRINCIPAL_STRING);
+		String principalString = aggregatePodPrincipalString();
+		X500Principal principal = new X500Principal(principalString);
 
 		PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(principal, publicKey);
 		JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder(CaConfig.SIGNATURE_ALGORITHM);

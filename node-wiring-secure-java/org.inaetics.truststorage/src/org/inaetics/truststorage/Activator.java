@@ -61,7 +61,7 @@ public class Activator extends DependencyActivatorBase implements TrustStorageCo
 	}
 	
 	private String getConfiguredKeyStoreFileName(Dictionary<String, ?> properties) throws ConfigurationException {
-		return getConfigStringValue(m_context, CONFIG_KEYSTORE_FILE_NAME, properties, "inaetics.keystore");
+		return getConfigStringValue(m_context, CONFIG_KEYSTORE_FILE_NAME, properties, "/tmp/in-keys/client/inaetics.keystore");
 	}
 
 	private String getConfiguredKeyStorePassword(Dictionary<String, ?> properties) throws ConfigurationException {
@@ -73,7 +73,7 @@ public class Activator extends DependencyActivatorBase implements TrustStorageCo
 	}
 	
 	private String getConfiguredTrustStoreFileName(Dictionary<String, ?> properties) throws ConfigurationException {
-		return getConfigStringValue(m_context, CONFIG_TRUSTSTORE_FILE_NAME, properties, "inaetics.truststore");
+		return getConfigStringValue(m_context, CONFIG_TRUSTSTORE_FILE_NAME, properties, "/tmp/in-keys/client/inaetics.truststore");
 	}
 
 	private String getConfiguredTrustStorePassword(Dictionary<String, ?> properties) throws ConfigurationException {

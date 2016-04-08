@@ -24,7 +24,12 @@ public class HttpsClientEndpointFactory extends AbstractComponentDelegate implem
     private ClientEndpointProblemListener m_problemListener;
     private HttpsAdminConfiguration m_configuration;
     private volatile TrustStorageService trustService;
+    
+    public void setTrustStorageService(TrustStorageService trustStorage)
 
+    {
+    	this.trustService = trustStorage;
+    }
     /**
      * Creates a new {@link HttpsClientEndpointFactory} instance.
      */

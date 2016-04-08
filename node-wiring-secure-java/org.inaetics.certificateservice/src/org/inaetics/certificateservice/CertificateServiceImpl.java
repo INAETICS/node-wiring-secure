@@ -14,7 +14,7 @@ import org.inaetics.truststorage.TrustStorageService;
 public class CertificateServiceImpl implements CertificateService {
 
 	private volatile TrustStorageService trustStorageService;
-
+	
 	@Override
 	public void verifyCertificate(X509Certificate certificate) throws InvalidKeyException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
 		// TODO Auto-generated method stub

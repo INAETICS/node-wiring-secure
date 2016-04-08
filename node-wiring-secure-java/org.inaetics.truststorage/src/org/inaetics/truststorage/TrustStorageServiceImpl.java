@@ -115,13 +115,25 @@ public class TrustStorageServiceImpl implements TrustStorageService {
 	    final KeyStore keyStore = KeyStore.getInstance(m_configuration.getKeyStoreType());    
 	    
 	    if (file.exists()) {
+	    	System.out.println("no keystores available, creating");
 	        keyStore.load(new FileInputStream(file), password.toCharArray());    
 	    } else {
+	    	// create parent folders
+	    	File parent = file.getParentFile();
+	    	if(!parent.exists() && !parent.mkdirs()){
+	    	    throw new IllegalStateException("Keystore Failure: Couldn't create dir: " + parent);
+	    	}
+	    	
 	        keyStore.load(null, null);
 	        keyStore.store(new FileOutputStream(fileName), password.toCharArray());    
 	    }
 	 
 	    return keyStore;
+	}
+
+	@Override
+	public char[] getKeyStoreKeyPassword() {
+		return m_configuration.getKeyStorePassword().toCharArray();
 	}
 
 //	@Override

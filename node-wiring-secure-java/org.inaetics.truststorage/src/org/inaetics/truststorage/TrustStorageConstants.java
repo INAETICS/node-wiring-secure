@@ -14,7 +14,7 @@ public interface TrustStorageConstants {
 	/**
      * Configuration PID
      */
-    String SERVICE_PID = "org.inaetics.wiring.admin.https";
+    String SERVICE_PID = "org.inaetics.truststorage";
 	
     /**
      * Configuration property: truststore type

@@ -22,6 +22,12 @@ public interface TrustStorageService {
 	public KeyStore getKeyStore();
 	
 	/**
+	 * Get the keystore key password.
+	 * @return the keystore key password.
+	 */
+	public char[] getKeyStoreKeyPassword();
+	
+	/**
 	 * Get the current root CA certificate from truststore
 	 * @return rootCaCert
 	 */

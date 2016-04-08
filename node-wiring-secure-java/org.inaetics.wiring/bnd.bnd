@@ -10,6 +10,9 @@
 	${livetribe},\
 	${javax-jmdns},\
 	${slf4j},\
-	org.inaetics.truststorage;version=latest
+	org.inaetics.truststorage;version=latest,\
+	org.inaetics.certificateservice;version=latest,\
+	org.apache.felix.http.jetty;version=2.3,\
+	org.apache.felix.http.api;version=2.3
 
 -sub: *.bnd
