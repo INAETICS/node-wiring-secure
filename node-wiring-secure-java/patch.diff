@@ -1,0 +1,253 @@
+From a04c446a71331632a1045d04b513346d977b727a Mon Sep 17 00:00:00 2001
+From: mike <327450@student.saxion.nl>
+Date: Tue, 12 Jan 2016 16:28:40 +0100
+Subject: [PATCH] client cert
+
+---
+ cnf/ext/bouncycastle.bnd                                  |  2 +-
+ org.inaetics.remote.demo/calculator.client.bndrun         |  5 +++--
+ org.inaetics.remote.demo/calculator.server.bndrun         |  5 +++--
+ org.inaetics.wiring/bnd.bnd                               |  3 ++-
+ .../src/org/inaetics/wiring/admin/https/Activator.java    |  4 +++-
+ .../admin/https/ClientCertificateEnforcementFilter.java   |  2 +-
+ .../inaetics/wiring/admin/https/HttpsClientEndpoint.java  | 15 +++++++++++++--
+ .../wiring/admin/https/HttpsClientEndpointFactory.java    |  5 ++++-
+ .../inaetics/wiring/admin/https/WiringAdminFactory.java   |  9 ++++++++-
+ 9 files changed, 38 insertions(+), 12 deletions(-)
+
+diff --git a/cnf/ext/bouncycastle.bnd b/cnf/ext/bouncycastle.bnd
+index 5ab4d59..1e82651 100644
+--- a/cnf/ext/bouncycastle.bnd
++++ b/cnf/ext/bouncycastle.bnd
+@@ -1,4 +1,4 @@
+ bouncycastle:\
+ 	${workspace}/cnf/lib/bouncycastle/bcpkix-1.53.0.jar;version=file,\
+-	${workspace}/cnf/lib/bouncycastle/bcprov-1.53.0.jar;version=file,\
++	${workspace}/cnf/lib/bouncycastle/bcprov-1.53.0.jar;version=file
+  
+\ No newline at end of file
+diff --git a/org.inaetics.remote.demo/calculator.client.bndrun b/org.inaetics.remote.demo/calculator.client.bndrun
+index 89edfd2..700c9bb 100644
+--- a/org.inaetics.remote.demo/calculator.client.bndrun
++++ b/org.inaetics.remote.demo/calculator.client.bndrun
+@@ -5,7 +5,7 @@
+ 
+ -resolve.effective: active
+ 
+--runbundles:  \
++-runbundles: \
+ 	osgi.enterprise;version='[5,6)',\
+ 	org.apache.felix.http.servlet-api;version='[1.0.0, 1.1)',\
+ 	org.apache.felix.http.api;version='[2.3.0, 3)',\
+@@ -30,7 +30,8 @@
+ 	org.amdatu.remote.topology.promiscuous;version=latest,\
+ 	org.inaetics.remote.admin.wiring;version=latest,\
+ 	org.inaetics.remote.demo.calculator.api;version=latest,\
+-	org.inaetics.remote.demo.calculator.client;version=latest
++	org.inaetics.remote.demo.calculator.client;version=latest,\
++	org.inaetics.truststorage;version=latest
+ 
+ -runproperties:  \
+ 	org.amdatu.remote.discovery.etcd.connecturl=http://docker:4001,\
+diff --git a/org.inaetics.remote.demo/calculator.server.bndrun b/org.inaetics.remote.demo/calculator.server.bndrun
+index 40aac40..99efc7c 100644
+--- a/org.inaetics.remote.demo/calculator.server.bndrun
++++ b/org.inaetics.remote.demo/calculator.server.bndrun
+@@ -5,7 +5,7 @@
+ 
+ -resolve.effective: active
+ 
+--runbundles:  \
++-runbundles: \
+ 	osgi.enterprise;version='[5,6)',\
+ 	org.apache.felix.http.servlet-api;version='[1.0.0, 1.1)',\
+ 	org.apache.felix.http.api;version='[2.3.0, 3)',\
+@@ -30,7 +30,8 @@
+ 	org.amdatu.remote.topology.promiscuous;version=latest,\
+ 	org.inaetics.remote.admin.wiring;version=latest,\
+ 	org.inaetics.remote.demo.calculator.api;version=latest,\
+-	org.inaetics.remote.demo.calculator.server;version=latest
++	org.inaetics.remote.demo.calculator.server;version=latest,\
++	org.inaetics.truststorage;version=latest
+ 
+ 
+ -runproperties:  \
+diff --git a/org.inaetics.wiring/bnd.bnd b/org.inaetics.wiring/bnd.bnd
+index 7bc3cd5..824f3dc 100644
+--- a/org.inaetics.wiring/bnd.bnd
++++ b/org.inaetics.wiring/bnd.bnd
+@@ -9,6 +9,7 @@
+ 	${etcd4j-and-dependencies},\
+ 	${livetribe},\
+ 	${javax-jmdns},\
+-	${slf4j}
++	${slf4j},\
++	org.inaetics.truststorage;version=latest
+ 
+ -sub: *.bnd
+\ No newline at end of file
+diff --git a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/Activator.java b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/Activator.java
+index abd90e5..f368129 100644
+--- a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/Activator.java
++++ b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/Activator.java
+@@ -31,6 +31,7 @@ import javax.swing.OverlayLayout;
+ import org.apache.felix.dm.Component;
+ import org.apache.felix.dm.DependencyActivatorBase;
+ import org.apache.felix.dm.DependencyManager;
++import org.inaetics.truststorage.TrustStorageService;
+ import org.inaetics.wiring.WiringAdmin;
+ import org.osgi.framework.BundleContext;
+ import org.osgi.framework.Constants;
+@@ -194,7 +195,8 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
+ 		Component listenerComponent = createComponent().setInterface(WiringAdmin.class.getName(), properties)
+ 				.setImplementation(factory)
+ 				.add(createServiceDependency().setService(HttpService.class).setRequired(true))
+-				.add(createServiceDependency().setService(LogService.class).setRequired(false));
++				.add(createServiceDependency().setService(LogService.class).setRequired(false))
++				.add(createServiceDependency().setService(TrustStorageService.class).setRequired(true));
+ 		m_listenerComponent = listenerComponent;
+ 		m_dependencyManager.add(listenerComponent);
+ 
+diff --git a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/ClientCertificateEnforcementFilter.java b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/ClientCertificateEnforcementFilter.java
+index 953fd5f..66b6bda 100644
+--- a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/ClientCertificateEnforcementFilter.java
++++ b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/ClientCertificateEnforcementFilter.java
+@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
+  */
+ public class ClientCertificateEnforcementFilter implements Filter {
+ 	
+-	private static final String CERT_KEY = "javax.servlet.request.X509Certificate";
++	private static final String CERT_KEY = "java.servlet.request.X509Certificate";
+ 	
+ 	private static final int HTTP_CODE_UNAUTHORIZED = 401;
+ 
+diff --git a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpoint.java b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpoint.java
+index 1755401..74b38c2 100644
+--- a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpoint.java
++++ b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpoint.java
+@@ -14,10 +14,12 @@ import java.net.URL;
+ import java.security.KeyStore;
+ 
+ import javax.net.ssl.HttpsURLConnection;
++import javax.net.ssl.KeyManagerFactory;
+ import javax.net.ssl.SSLContext;
+ import javax.net.ssl.SSLSocketFactory;
+ import javax.net.ssl.TrustManagerFactory;
+ 
++import org.inaetics.truststorage.TrustStorageService;
+ import org.inaetics.wiring.WiringEndpointDescription;
+ import org.inaetics.wiring.base.IOUtil;
+ import org.osgi.framework.ServiceException;
+@@ -32,6 +34,7 @@ import org.osgi.framework.ServiceException;
+ public final class HttpsClientEndpoint {
+ 
+     private static final int FATAL_ERROR_COUNT = 5;
++    private volatile TrustStorageService m_trustService;
+ 
+     private final WiringEndpointDescription m_endpoint;
+     private final HttpsAdminConfiguration m_configuration;
+@@ -39,10 +42,11 @@ public final class HttpsClientEndpoint {
+     private ClientEndpointProblemListener m_problemListener;
+     private int m_remoteErrors;
+ 
+-    public HttpsClientEndpoint(WiringEndpointDescription endpoint, HttpsAdminConfiguration configuration) {
++    public HttpsClientEndpoint(WiringEndpointDescription endpoint, HttpsAdminConfiguration configuration , TrustStorageService trustService) {
+         m_endpoint = endpoint;
+         m_configuration = configuration;
+         m_remoteErrors = 0;
++        m_trustService = trustService;
+     }
+ 
+     /**
+@@ -103,12 +107,19 @@ public final class HttpsClientEndpoint {
+             trustStore.load(trustStoreStream, truststorePassword);
+             trustStoreStream.close();
+             
++            
++            KeyStore keyStore = m_trustService.getKeyStore();
++            
++            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
++            kmf.init(keyStore, ("changeit").toCharArray());
++           
++            
+             // trust manager factory
+             // TODO configurable algorithm
+             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+     		tmf.init(trustStore);
+     		SSLContext ctx = SSLContext.getInstance(sslContextInstance);
+-    		ctx.init(null, tmf.getTrustManagers(), null);
++    		ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+     		SSLSocketFactory sslFactory = ctx.getSocketFactory();
+             
+             connection.setSSLSocketFactory(sslFactory);
+diff --git a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpointFactory.java b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpointFactory.java
+index 792e442..81b01b0 100644
+--- a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpointFactory.java
++++ b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/HttpsClientEndpointFactory.java
+@@ -6,6 +6,7 @@ package org.inaetics.wiring.admin.https;
+ import java.util.Map;
+ import java.util.concurrent.ConcurrentHashMap;
+ 
++import org.inaetics.truststorage.TrustStorageService;
+ import org.inaetics.wiring.WiringEndpointDescription;
+ import org.inaetics.wiring.base.AbstractComponentDelegate;
+ 
+@@ -22,6 +23,7 @@ public class HttpsClientEndpointFactory extends AbstractComponentDelegate implem
+ 	
+     private ClientEndpointProblemListener m_problemListener;
+     private HttpsAdminConfiguration m_configuration;
++    private volatile TrustStorageService trustService;
+ 
+     /**
+      * Creates a new {@link HttpsClientEndpointFactory} instance.
+@@ -29,12 +31,13 @@ public class HttpsClientEndpointFactory extends AbstractComponentDelegate implem
+     public HttpsClientEndpointFactory(WiringAdminFactory factory, HttpsAdminConfiguration configuration) {
+     	super(factory);
+         m_configuration = configuration;
++        trustService = factory.getTrustStorageService();
+     }
+ 
+     public WiringSenderImpl addEndpoint(WiringEndpointDescription endpoint) {
+     	HttpsClientEndpoint client = m_clients.get(endpoint);
+     	if (client == null) {
+-    		client = new HttpsClientEndpoint(endpoint, m_configuration);
++    		client = new HttpsClientEndpoint(endpoint, m_configuration,trustService);
+     		m_clients.put(endpoint.getId(), client);
+     		client.setProblemListener(this);
+     	}
+diff --git a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/WiringAdminFactory.java b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/WiringAdminFactory.java
+index e5f8de7..0cb8ea4 100644
+--- a/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/WiringAdminFactory.java
++++ b/org.inaetics.wiring/src/org/inaetics/wiring/admin/https/WiringAdminFactory.java
+@@ -5,6 +5,7 @@ package org.inaetics.wiring.admin.https;
+ 
+ import java.util.concurrent.ConcurrentHashMap;
+ 
++import org.inaetics.truststorage.TrustStorageService;
+ import org.inaetics.wiring.WiringAdmin;
+ import org.inaetics.wiring.base.AbstractComponent;
+ import org.osgi.framework.Bundle;
+@@ -28,7 +29,8 @@ public final class WiringAdminFactory extends AbstractComponent implements Servi
+     
+     private final HttpsServerEndpointHandler m_serverEndpointHandler;
+     private final HttpsClientEndpointFactory m_clientEndpointFactory;
+-
++    
++    private volatile TrustStorageService m_trustStorageService;
+     private volatile HttpService m_httpService;
+     
+     private volatile boolean m_started = false;
+@@ -109,5 +111,10 @@ public final class WiringAdminFactory extends AbstractComponent implements Servi
+     WiringAdminListenerHandler getWiringAdminListenerHandler() {
+     	return m_wiringAdminListenerhandler;
+     }
++    
++    TrustStorageService getTrustStorageService()
++    {
++    	return m_trustStorageService;
++    }
+ 
+ }
+-- 
+1.9.5.msysgit.0
+
