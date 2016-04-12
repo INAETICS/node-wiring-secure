@@ -65,7 +65,7 @@
 	org.inaetics.truststorage.keystore="/tmp/in-keys/client/inaetics.keystore",\
 	org.inaetics.truststorage.truststore="/tmp/in-keys/client/inaetics.truststore",\
 	org.inaetics.wiring.admin.https.port.secure=8444,\
-	org.inaetics.wiring.admin.https.clientvalidation=false,\
+	org.inaetics.wiring.admin.https.clientvalidation=true,\
 	org.apache.felix.http.enable=true,\
 	org.apache.felix.https.enable=false,\
 	org.osgi.service.http.port=8081,\

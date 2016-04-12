@@ -66,11 +66,11 @@ public class WiringConnectorFactory implements ConnectorFactory {
 				}
 
 				public void checkClientTrusted(X509Certificate[] certs, String authType) {
-					System.out.println("for the breakpoint.");
+					// not (yet) required
 				}
 
 				public void checkServerTrusted(X509Certificate[] certs, String authType) {
-					System.out.println("for the breakpoint.");
+					// not (yet) required
 				}
 			} };
 			return trustManagers;
