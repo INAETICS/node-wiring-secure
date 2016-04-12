@@ -22,46 +22,55 @@ import org.apache.felix.http.jetty.ConnectorFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.ssl.SslSocketConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.inaetics.truststorage.TrustStorageConfiguration;
 import org.inaetics.truststorage.TrustStorageService;
 
 public class WiringConnectorFactory implements ConnectorFactory {
 	private volatile TrustStorageService m_trustStorageService;
+	private volatile HttpsAdminConfiguration m_configuration;
+	
+	public WiringConnectorFactory(HttpsAdminConfiguration configuration) {
+		m_configuration = configuration;
+	};
 
 	@Override
 	public Connector createConnector() {
 		SslContextFactory sslContextFactory = new ShortTrustSslContextFactory();
-		// sslContextFactory
-		// TODO expose this factory as ManagedService as well in order to make
-		// it configurable...
-		sslContextFactory.setKeyStore("/inkeys/inaetics.keystore");
-		sslContextFactory.setKeyStorePassword("changeit");
-		sslContextFactory.setTrustStore("/inkeys/inaetics.truststore");
-		sslContextFactory.setTrustStorePassword("changeit");
-		sslContextFactory.setNeedClientAuth(false);
-
-		// port = getConfigIntValue(m_context,
-		// "org.osgi.service.http.port.secure", properties, 8443);
+		try {
+			// this are just dummy keystores to trick the SslContextFactory
+			sslContextFactory.setKeyStore(KeyStore.getInstance(KeyStore.getDefaultType()));
+			sslContextFactory.setTrustStore(KeyStore.getInstance(KeyStore.getDefaultType()));
+		} catch (KeyStoreException e) {
+			// do nothing.
+		}
+		boolean enforceClientAuth = m_configuration.shouldEenforceClientCertValidation();
+		sslContextFactory.setNeedClientAuth(enforceClientAuth);
 		Connector connector = new SslSocketConnector(sslContextFactory);
-		connector.setPort(8555);
+		int securePort = m_configuration.getSecurePort();
+		connector.setPort(securePort);
 
 		return connector;
 	}
 
 	private class ShortTrustSslContextFactory extends SslContextFactory {
+		private static final String INAETICS_ALIAS = "INAETICS";
+		private static final String INAETICS_CRYPTO_ALG = "RSA";
+		
 		@Override
 		protected TrustManager[] getTrustManagers(KeyStore arg0, Collection<? extends CRL> arg1) throws Exception {
 			TrustManager[] trustManagers = new TrustManager[] { new X509TrustManager() {
-				public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-					System.out.println("TRUST");
-					return null;
+				public X509Certificate[] getAcceptedIssuers() {
+					X509Certificate cert = m_trustStorageService.getRootCaCert();
+					X509Certificate[] ret = { cert };
+					return ret;
 				}
 
-				public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-					System.out.println("TRUST");
+				public void checkClientTrusted(X509Certificate[] certs, String authType) {
+					System.out.println("for the breakpoint.");
 				}
 
-				public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-					System.out.println("TRUST");
+				public void checkServerTrusted(X509Certificate[] certs, String authType) {
+					System.out.println("for the breakpoint.");
 				}
 			} };
 			return trustManagers;
@@ -70,12 +79,9 @@ public class WiringConnectorFactory implements ConnectorFactory {
 		@Override
 		protected KeyManager[] getKeyManagers(KeyStore arg0) throws Exception {
 			KeyManager[] keyManagers = new KeyManager[] { new X509KeyManager() {
-				private static final String INAETICS_ALIAS = "INAETICS";
-				private static final String INAETICS_CRYPTO_ALG = "RSA";
-
 				@Override
 				public String[] getServerAliases(String keyType, Principal[] issuers) {
-					System.out.println("KEY");
+					// not (yet) required!
 					return null;
 				}
 
@@ -99,8 +105,7 @@ public class WiringConnectorFactory implements ConnectorFactory {
 
 				@Override
 				public String[] getClientAliases(String keyType, Principal[] issuers) {
-					// TODO Auto-generated method stub
-					System.out.println("KEY");
+					// not (yet) required!
 					return null;
 				}
 
@@ -130,8 +135,7 @@ public class WiringConnectorFactory implements ConnectorFactory {
 
 				@Override
 				public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
-					// TODO Auto-generated method stub
-					System.out.println("KEY");
+					// not (yet)required
 					return null;
 				}
 			} };

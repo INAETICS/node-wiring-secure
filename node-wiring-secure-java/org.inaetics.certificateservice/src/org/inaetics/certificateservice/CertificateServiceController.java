@@ -8,11 +8,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
-import java.net.Inet4Address;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.Proxy;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -29,6 +26,8 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -50,6 +49,12 @@ public class CertificateServiceController {
 
 	private static CertificateServiceController _instance;
 	private volatile TrustStorageService trustStorage;
+	
+	private static final String IPADDRESS_PATTERN = 
+			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 
 	private CertificateServiceController(TrustStorageService trustStorage) {
 		this.trustStorage = trustStorage;
@@ -70,13 +75,25 @@ public class CertificateServiceController {
 		return _instance;
 	}
 	
+	/**
+	 * Generates the principal string for the certificate.
+	 * @return The certificates principal string based on the primary route.
+	 */
 	private String aggregatePodPrincipalString() {
-		String hostAddress = CertificateServiceController.cmdExec("hostname -i");
-		hostAddress = hostAddress.trim();
-		hostAddress = hostAddress.replace("\n", "");
-		hostAddress = hostAddress.replace("\"", "");
+		String hostString = CertificateServiceController.cmdExec("ip route get 1");
+		String ip = "127.0.0.1";
+		String[] input = hostString.split("\n");
+		if (input.length >= 1) {
+			String[] ipArr = input[0].split(" ");
+			hostString = ipArr[ipArr.length-1];
+			Pattern p = Pattern.compile(IPADDRESS_PATTERN);
+			Matcher m = p.matcher(hostString);
+			if (m.matches()) {
+				ip = m.group(0);
+			}
+		}
 	    return CaConfig.PRINCIPAL_STRING.replace(
-	            CaConfig.PRINCIPAL_STRING_CN_SELECTER, hostAddress);
+	            CaConfig.PRINCIPAL_STRING_CN_SELECTER, ip);
 	}
 	
 	public static String cmdExec(String cmdLine) {

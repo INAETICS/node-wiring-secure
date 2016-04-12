@@ -67,18 +67,12 @@
 	org.inaetics.wiring.discovery.etcd.rootpath=/inaetics/discovery,\
 	org.inaetics.wiring.admin.https.zone=zone1,\
 	org.inaetics.wiring.admin.https.node=node1,\
+	org.inaetics.wiring.admin.https.port.secure=8443,\
+	org.inaetics.wiring.admin.https.clientvalidation=false,\
 	org.apache.felix.http.enable=true,\
-	org.apache.felix.https.enable=true,\
+	org.apache.felix.https.enable=false,\
 	org.osgi.service.http.port=8080,\
-	org.osgi.service.http.port.secure=8443,\
 	org.apache.felix.http.host=localhost,\
-	org.apache.felix.https.keystore="/inkeys/inaetics.keystore",\
-	org.apache.felix.https.keystore.password="changeit",\
-	org.apache.felix.https.keystore.key.password="changeit",\
-	org.apache.felix.https.truststore="/inkeys/inaetics.truststore",\
-	org.apache.felix.https.truststore.password="changeit",\
-	org.apache.felix.https.truststore.type="JKS",\
-	org.apache.felix.https.clientcertificate="wants",\
 	org.inaetics.truststorage.keystore="/tmp/in-keys/server/inaetics.keystore",\
 	org.inaetics.truststorage.truststore="/tmp/in-keys/server/inaetics.truststore"
 	

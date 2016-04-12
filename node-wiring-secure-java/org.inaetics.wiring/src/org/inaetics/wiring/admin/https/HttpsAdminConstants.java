@@ -25,6 +25,11 @@ public interface HttpsAdminConstants {
      * Configuration property: port
      */
     String PORT_CONFIG_KEY = SERVICE_PID + ".port.secure";
+    
+    /**
+     * Configuration property: truststore type
+     */
+    String CLIENT_CERT_ENFORCE_KEY = SERVICE_PID + ".clientvalidation";
 
     /**
      * Configuration property: path

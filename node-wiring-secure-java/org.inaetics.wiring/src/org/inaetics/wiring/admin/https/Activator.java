@@ -9,6 +9,7 @@ import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_KEYSTOR
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_FILE_NAME;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_PASSWORD;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONFIG_TRUSTSTORE_TYPE;
+import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CLIENT_CERT_ENFORCE_KEY;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.CONNECT_TIMEOUT_CONFIG_KEY;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.NODE_CONFIG_KEY;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.PATH_CONFIG_KEY;
@@ -19,6 +20,7 @@ import static org.inaetics.wiring.admin.https.HttpsAdminConstants.SERVICE_PID;
 import static org.inaetics.wiring.admin.https.HttpsAdminConstants.ZONE_CONFIG_KEY;
 import static org.inaetics.wiring.base.ServiceUtil.getConfigIntValue;
 import static org.inaetics.wiring.base.ServiceUtil.getConfigStringValue;
+import static org.inaetics.wiring.base.ServiceUtil.getConfigBoolValue;
 
 import java.net.URL;
 import java.util.Dictionary;
@@ -53,6 +55,7 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
    
 	private static final int DEFAULT_CONNECT_TIMEOUT = 5000;
     private static final int DEFAULT_READ_TIMEOUT = 60000;
+    private static final int DEFAULT_SECURE_PORT = 8443;
 
     private volatile BundleContext m_context;
     private volatile DependencyManager m_dependencyManager;
@@ -63,8 +66,10 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
     private volatile Component m_wiringConnectorFactory;
     
     private volatile URL m_baseUrl;
+    private volatile int m_securePort;
     private volatile int m_connectTimeout;
     private volatile int m_readTimeout;
+    private volatile boolean m_clientCertValidation;
     private volatile String m_zone;
     private volatile String m_node;
     
@@ -84,6 +89,8 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
         String truststoreFileName = getConfiguredTruststoreFileName(null);
         String truststorePassword = getConfiguredTruststorePassword(null);
         String truststoreType = getConfiguredTruststoreType(null);
+        int securePort = getConfigIntValue(m_context, HttpsAdminConstants.PORT_CONFIG_KEY, null, DEFAULT_SECURE_PORT);
+        boolean enforceClientCert = getConfiguredClientCertValidation(null);
         
         try {
             m_baseUrl = parseConfiguredBaseUrl(null);
@@ -94,6 +101,8 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
             m_truststore_file_name = truststoreFileName;
             m_truststore_password = truststorePassword;
             m_truststore_type = truststoreType;
+            m_securePort = securePort;
+            m_clientCertValidation = enforceClientCert;
             registerFactoryService();
             registerConfigurationService();
             registerWiringConnectorFactory();
@@ -106,7 +115,7 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
     @Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
-		
+		// this enforcement filter is required to make the discovery available via standard http ( not encrypted )
 //		ServiceReference sRef = context.getServiceReference(ExtHttpService.class.getName());
 //
 //		if (sRef != null) {
@@ -149,6 +158,8 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
             m_truststore_file_name = truststoreFileName;
             m_truststore_password = truststorePassword;
             m_truststore_type = truststoreType;
+            m_securePort = getConfigIntValue(m_context, HttpsAdminConstants.PORT_CONFIG_KEY, properties, DEFAULT_SECURE_PORT);
+            m_clientCertValidation = getConfiguredClientCertValidation(properties);
             
             if (!baseUrl.equals(m_baseUrl)) {
                 m_baseUrl = baseUrl;
@@ -189,7 +200,7 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
     
     private void registerWiringConnectorFactory() {
     	Component component = createComponent()
-				.setInterface(ConnectorFactory.class.getName(), null).setImplementation(new WiringConnectorFactory())   	
+				.setInterface(ConnectorFactory.class.getName(), null).setImplementation(new WiringConnectorFactory(this))   	
 				.add(createServiceDependency().setService(TrustStorageService.class).setRequired(true))
 				.add(createServiceDependency().setService(LogService.class).setRequired(false))
 				.add(createServiceDependency().setService(CertificateService.class).setRequired(true));
@@ -250,7 +261,7 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
 
         int port = getConfigIntValue(m_context, HttpsAdminConstants.PORT_CONFIG_KEY, properties, -1);
         if (port == -1) {
-            port = getConfigIntValue(m_context, "org.osgi.service.http.port.secure", properties, 8443);
+            port = getConfigIntValue(m_context, HttpsAdminConstants.PORT_CONFIG_KEY, properties, 8443);
         }
 
         String path = getConfigStringValue(m_context, PATH_CONFIG_KEY, properties, SERVICE_PID);
@@ -299,6 +310,20 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
 
     private String getConfiguredTruststoreType(Dictionary<String, ?> properties) throws ConfigurationException {
         return getConfigStringValue(m_context, CONFIG_TRUSTSTORE_TYPE, properties, "JKS");
+    }
+    
+    private boolean getConfiguredClientCertValidation(Dictionary<String, ?> properties) throws ConfigurationException {
+    	return getConfigBoolValue(m_context, CLIENT_CERT_ENFORCE_KEY, properties, true);
+    }
+    
+    @Override
+    public int getSecurePort() {
+    	return m_securePort;
+    }
+    
+    @Override
+    public boolean shouldEenforceClientCertValidation() {
+    	return m_clientCertValidation;
     }
     
     @Override

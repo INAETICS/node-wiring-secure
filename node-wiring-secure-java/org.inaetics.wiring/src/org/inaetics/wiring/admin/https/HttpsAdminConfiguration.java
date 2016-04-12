@@ -20,6 +20,20 @@ public interface HttpsAdminConfiguration {
     public URL getBaseUrl();
     
     /**
+     * returns the configured port for the tls connection.
+     * 
+     * @return the secured port
+     */
+    public int getSecurePort();
+    
+    /**
+     * returns the configuration if the client certificate should be validated
+     * 
+     * @return the 
+     */
+    public boolean shouldEenforceClientCertValidation();
+    
+    /**
      * returns the connect timeout for the client endpoint
      * 
      * @return connect timeout in ms

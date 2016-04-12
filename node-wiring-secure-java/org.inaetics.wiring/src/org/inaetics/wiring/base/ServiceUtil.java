@@ -62,6 +62,27 @@ public final class ServiceUtil {
         }
         return value;
     }
+    
+    public static boolean getConfigBoolValue(BundleContext context, String key, Dictionary<String, ?> properties,
+            boolean defaultValue) throws ConfigurationException {
+
+            String value = null;
+            if (properties != null && properties.get(key) != null) {
+                value = properties.get(key).toString();
+            }
+            if (context != null && value == null) {
+                value = context.getProperty(key);
+            }
+            if (value == null) {
+                return defaultValue;
+            }
+            try {
+            	return Boolean.parseBoolean(value);
+            }
+            catch (NumberFormatException e) {
+                throw new ConfigurationException(key, "not an integer", e);
+            }
+        }
 
     public static int getConfigIntValue(BundleContext context, String key, Dictionary<String, ?> properties,
         int defaultValue) throws ConfigurationException {
