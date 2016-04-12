@@ -29,12 +29,14 @@ import java.util.Hashtable;
 import org.apache.felix.dm.Component;
 import org.apache.felix.dm.DependencyActivatorBase;
 import org.apache.felix.dm.DependencyManager;
+import org.apache.felix.http.api.ExtHttpService;
 import org.apache.felix.http.jetty.ConnectorFactory;
 import org.inaetics.certificateservice.api.CertificateService;
 import org.inaetics.truststorage.TrustStorageService;
 import org.inaetics.wiring.WiringAdmin;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.http.HttpService;
@@ -116,16 +118,16 @@ public final class Activator extends DependencyActivatorBase implements ManagedS
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		// this enforcement filter is required to make the discovery available via standard http ( not encrypted )
-//		ServiceReference sRef = context.getServiceReference(ExtHttpService.class.getName());
-//
-//		if (sRef != null) {
-//		Dictionary properties = new Hashtable();
-//		    properties.put("service.pid", ClientCertificateEnforcementFilter.class.getName());
-//		    properties.put("init.charencoding.filter.encoding", "UTF-8");
-//		    properties.put("init.charencoding.filter.forceencoding", "true");
-//		    ExtHttpService service = (ExtHttpService) context.getService(sRef);
-//		    service.registerFilter(new ClientCertificateEnforcementFilter(), "/.*", properties, 0, null);
-//		}
+		ServiceReference sRef = context.getServiceReference(ExtHttpService.class.getName());
+
+		if (sRef != null) {
+		Dictionary properties = new Hashtable();
+		    properties.put("service.pid", ClientCertificateEnforcementFilter.class.getName());
+		    properties.put("init.charencoding.filter.encoding", "UTF-8");
+		    properties.put("init.charencoding.filter.forceencoding", "true");
+		    ExtHttpService service = (ExtHttpService) context.getService(sRef);
+		    service.registerFilter(new ClientCertificateEnforcementFilter(), "/.*", properties, 0, null);
+		}
 	}
 
 	@Override

@@ -111,7 +111,7 @@ public final class HttpsClientEndpoint {
     		kmf.init(keyStore, keyStoreKeyPassword);
     		
             HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-            	private static final String HOSTNAME_VERIFICATION_PATTERN = "\\A(CN=){1}(%s){1}(,ST){1}(.)*\\Z";
+            	private static final String HOSTNAME_VERIFICATION_PATTERN = "\\A(CN=){1}(%s){1}(,){1}(.)*\\Z";
             	
 				@Override
 				public boolean verify(String hostname, SSLSession session) {
