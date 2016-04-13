@@ -59,22 +59,16 @@
 	org.inaetics.wiring.discovery.etcd.rootpath=/inaetics/discovery,\
 	org.inaetics.wiring.admin.https.zone=zone1,\
 	org.inaetics.wiring.admin.https.node=node1,\
-	org.inaetics.wiring.admin.https.truststore="inaetics.truststore",\
-	org.inaetics.wiring.admin.https.truststore.password="changeit",\
-	org.inaetics.wiring.admin.https.truststore.type="JKS",\
-	org.inaetics.truststorage.keystore="/tmp/in-keys/client/inaetics.keystore",\
-	org.inaetics.truststorage.truststore="/tmp/in-keys/client/inaetics.truststore",\
+	org.inaetics.truststorage.keystore="/tmp/in-keys-client/client/inaetics.keystore",\
+	org.inaetics.truststorage.truststore="/tmp/in-keys-client/client/inaetics.truststore",\
 	org.inaetics.wiring.admin.https.port.secure=8444,\
 	org.inaetics.wiring.admin.https.clientvalidation=true,\
 	org.apache.felix.http.enable=true,\
 	org.apache.felix.https.enable=false,\
 	org.osgi.service.http.port=8081,\
-	org.apache.felix.http.host=localhost,\
+	org.apache.felix.http.host=127.0.0.1,\
 	\
-	org.apache.felix.https.truststore="/inkeys/inaetics.truststore",\
-	org.apache.felix.https.truststore.password="changeit",\
-	org.apache.felix.https.truststore.type="JKS",\
-	org.apache.felix.https.clientcertificate="needs"
+	org.inaetics.certificateservice.cahostport=localhost:8888
 	
 
 	

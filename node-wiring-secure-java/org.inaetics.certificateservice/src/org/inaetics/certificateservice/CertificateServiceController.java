@@ -48,6 +48,7 @@ import org.json.simple.parser.ParseException;
 public class CertificateServiceController {
 
 	private static CertificateServiceController _instance;
+	
 	private volatile TrustStorageService trustStorage;
 	
 	private static final String IPADDRESS_PATTERN = 
@@ -58,7 +59,6 @@ public class CertificateServiceController {
 
 	private CertificateServiceController(TrustStorageService trustStorage) {
 		this.trustStorage = trustStorage;
-
 	}
 
 	protected static CertificateServiceController getInstance(TrustStorageService trustStorage) {
@@ -196,7 +196,7 @@ public class CertificateServiceController {
 			OutputStream out;
 			URL url = null;
 			try {
-				url = new URL(CaConfig.CA_SIGN_URL);
+				url = new URL(CaConfig.getSignUrl());
 				JSONObject csrPostBody = new JSONObject();
 				csrPostBody.put("certificate_request",
 						CaConfig.CSR_BEGIN + Base64.toBase64String(byteCSR) + CaConfig.CSR_END);
@@ -248,7 +248,7 @@ public class CertificateServiceController {
 		HttpURLConnection connection;
 
 		try {
-			URL url = new URL(CaConfig.CA_INFO_URL);
+			URL url = new URL(CaConfig.getRootCertUrl());
 			// Proxy proxy = new Proxy(Proxy.Type.HTTP, new
 			// InetSocketAddress("10.160.64.104", 8080));
 			connection = (HttpURLConnection) url.openConnection();
