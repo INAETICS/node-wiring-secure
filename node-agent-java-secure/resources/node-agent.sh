@@ -94,31 +94,35 @@ start_agent () {
   local props1="-Dagent.identification.agentid=$agent_id \
     -Dagent.discovery.serverurls=http://$current_provisioning_service \
     -Dagent.controller.syncinterval=10 \
-    -Dorg.osgi.service.http.port=$agent_port \
-    -Dorg.osgi.service.http.port.secure=$agent_port_secure \
     -Damdatu.remote.logging.level=5 \
     -Damdatu.remote.console.level=5 \
-	-Dorg.apache.felix.http.host=$agent_ipv4 \
+    \
     -Dorg.amdatu.remote.discovery.etcd.connecturl=http://$ETCDCTL_PEERS \
     -Dorg.amdatu.remote.discovery.etcd.rootpath=/inaetics/discovery \
     -Dorg.amdatu.remote.discovery.etcd.schedule=2 \
     -Dorg.amdatu.remote.admin.http.host=$agent_ipv4 \
+    \
     -Dinaetics.wiring.logging.level=5 \
     -Dinaetics.wiring.console.level=5 \
+    \
 	-Dorg.inaetics.wiring.discovery.etcd.zone=zone1 \
 	-Dorg.inaetics.wiring.discovery.etcd.node=$agent_id \
 	-Dorg.inaetics.wiring.discovery.etcd.connecturl=http://$ETCDCTL_PEERS \
 	-Dorg.inaetics.wiring.discovery.etcd.rootpath=/inaetics/wiring \
 	-Dorg.inaetics.wiring.admin.https.zone=zone1 \
 	-Dorg.inaetics.wiring.admin.https.node=$agent_id \
-  -Dorg.apache.felix.http.enable=true \
-  -Dorg.apache.felix.https.enable=true \
-  -Dorg.apache.felix.https.keystore="/inkeys/inaetics.keystore" \
-  -Dorg.apache.felix.https.keystore.password="changeit" \
-  -Dorg.apache.felix.https.keystore.key.password="changeit" \
-  -Dorg.apache.felix.https.truststore="/inkeys/inaetics.truststore" \
-  -Dorg.apache.felix.https.truststore.password="changeit" \
-  -Dorg.apache.felix.https.truststore.type="JKS" \
+    -Dorg.inaetics.wiring.admin.https.port.secure=$agent_port_secure \
+    -Dorg.inaetics.wiring.admin.https.clientvalidation=true \
+    \
+    -Dorg.osgi.service.http.port=$agent_port \
+	-Dorg.apache.felix.http.host=$agent_ipv4 \
+    -Dorg.apache.felix.http.enable=true \
+    -Dorg.apache.felix.https.enable=false \
+    \
+    -Dorg.inaetics.truststorage.keystore='/tmp/in-keys/client/inaetics.keystore' \
+    -Dorg.inaetics.truststorage.truststore='/tmp/in-keys/client/inaetics.truststore' \
+    \
+    -Dorg.inaetics.certificateservice.cahostport=authority:8888 \ 
     -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000"
     
   local props2=-Dgosh.args="--nointeractive --command telnetd --ip=0.0.0.0 start"
