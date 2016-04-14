@@ -8,7 +8,7 @@ Build all bundles by executing `./gradlew jar` in the root directory, artifacts 
 
 This a HTTPS (TLS) based implementation of the INAETICS Wiring, see https://inaetics.atlassian.net/wiki/display/IN/Wiring+Logic
 
-Main project: org.inaetics.wiring
+Main project: org.inaetics.wiring  
 Demo project: org.inaetcis.remote.demo
 
 The best way to get started with the wiring implementation would be to run the demo project. There are multiple demo projects available, but the best one to test the secure wiring implementation is the "Calculator Example". To run this, you have to run two instances, the calculator client and the calculator server.
