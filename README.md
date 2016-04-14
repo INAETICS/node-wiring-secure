@@ -2,10 +2,13 @@
 A secured version of the inaetics wiring implementation by using short lived certificates with tls.
 
 ## The Certificate Authority
-[Link to the sub project](/inaetics-ca)
+[Link to the sub project](/inaetics-ca) 
+
 The certificate utilizing a (containerized) Cloudflare CFSSL PKI Toolkit and has a REST api. 
-This authority has to be deployed in an INAETICS cluster. Afterwards, the (secure) wiring has to be configured to know the host(s) of this certificate authority.
-The configuration of the certificate authority can be modified to specify the time duration in which a certificate is valid.
+
+This authority has to be deployed in an INAETICS cluster. Afterwards, the (secure) wiring has to be configured to know the host(s) of this certificate authority. 
+
+The configuration of the certificate authority can be modified to specify the time duration in which a certificate is valid. 
 [Link to the cfssl project github](https://github.com/cloudflare/cfssl)
 
 
