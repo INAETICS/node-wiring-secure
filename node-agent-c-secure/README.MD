@@ -7,7 +7,7 @@ To init the project, please run:
 $ sh init.sh
 ```
 
-This will copy the original [INAETICS Node Agent C] and modify the node agent shell script to use the secure wiring.
+This will clone the original [INAETICS Node Agent C] and modify the node agent shell script to use the secure wiring.
 
 ### Version
 1.0
