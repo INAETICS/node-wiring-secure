@@ -8,13 +8,13 @@ It is really important to generate a key pair before deploying the CA anywhere i
 Keys can be generated using this command:
 `cfssl genkey -initca /etc/cfssl/ca.json | cfssljson ca`
 
-More information on how to configure the CFSSL CA can be found [here](https://github.com/cloudflare/cfssl/blob/master/README.md).
-
 # Configuration
 There are a couple things that have to be configured specific to the system. These things can be configured in the `inaetics-ca/ca-config.json` file. Please note, that if you change the port of the CA, you also have to modify the `Dockerfile`.
   - The time that a certificate is valid
   - `backdate` sets the duration for which the cert will be dated back, to prevent overlapping.
   - Except for `default`, multiple profiles can be defined. This can f.e. be used to used very short lifespans of certificates for critical parts of infrastructure and longer lifespans for not important parts. This feature has to be implemented in the "C implementation Trust Manager" and the "Java implementation Certificate Service".
+
+More information on how to configure the CFSSL CA can be found [here](https://github.com/cloudflare/cfssl/blob/master/README.md).
 
 # Important TODO's
 In the current version of the CA, the keys are included in to the docker image. This is just intended to make the development process easier and *CAN NOT BE USED IN PRODUCTION*. Please mount a volume or use environment variables for the keys, depending on your orchestration technology. [Example using secrets in Kubernetes.](http://kubernetes.io/docs/user-guide/secrets/)
