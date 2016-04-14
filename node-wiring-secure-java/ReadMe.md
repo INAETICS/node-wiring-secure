@@ -1,4 +1,4 @@
-# Node Wiring and RSA INAETICS [![Build Status](https://travis-ci.org/INAETICS/node-wiring-java.svg?branch=master)](https://travis-ci.org/INAETICS/node-wiring-java)
+# Secure Node Wiring and RSA INAETICS for Java
 
 ## Build
 
@@ -6,32 +6,18 @@ Build all bundles by executing `./gradlew jar` in the root directory, artifacts 
 
 ## Node Wiring
 
-This a HTTP based implementation of the INAETICS Wiring, see https://inaetics.atlassian.net/wiki/display/IN/Wiring+Logic
+This a HTTPS (TLS) based implementation of the INAETICS Wiring, see https://inaetics.atlassian.net/wiki/display/IN/Wiring+Logic
 
-Main project: org.inaetics.wiring  
-Demo project: org.inaetcis.wiring.demo
+Main project: org.inaetics.wiring
+Demo project: org.inaetcis.remote.demo
 
-Using the demo project:
+The best way to get started with the wiring implementation would be to run the demo project. There are multiple demo projects available, but the best one to test the secure wiring implementation is the "Calculator Example". To run this, you have to run two instances, the calculator client and the calculator server.
 
-- change runproperties in echoService.bndrun and echoClient.bndrun to your environment
-- start echoService.bndrun
-- start echoClient.bndrun
-- find the wireId created by the echoService in etcd
-- on the Gogo shell of the echoClient execute `sendMessage <wireId> <message>`
-- result should be "echo: &lt;message&gt;"
+Using the calculator demo project:
 
-## RSA Inaetics
-
-This is a Remote Service Admin implementation based on INAETICS Wiring
-
-Main project: org.inaetics.remote  
-iTests: org.inaetics.remote.itest  
-Demo project: org.inaetics.remote.demo
-
-Using the demo project:
-
-- change runproperties in simpleEchoService.bndrun and echoClient.bndrun to your environment
-- start simpleEchoService.bndrun
-- start echoClient.bndrun
-- on the Gogo shell of the echoClient execute `sendMessage <message>`
-- result should be "echo: &lt;message&gt;"
+- change runproperties in the `calculator.\*.bndrun` to your environment
+- start `calculator.client.bndrun` (instance #1)
+- start `calculator.server.bndrun` (instance #2)
+- find the wireId created by the echoService; get the wire address in etcd - `etcdctl ls --recursive /` & `etcdctl get /a/b/c/d`
+- on the Gogo shell of the calculator client execute `add {num1} {num2}`
+- result should be the sum of both numbers.
