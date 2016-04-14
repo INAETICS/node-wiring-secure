@@ -122,7 +122,7 @@ start_agent () {
     -Dorg.inaetics.truststorage.keystore='/tmp/in-keys/client/inaetics.keystore' \
     -Dorg.inaetics.truststorage.truststore='/tmp/in-keys/client/inaetics.truststore' \
     \
-    -Dorg.inaetics.certificateservice.cahostport=authority:8888 \ 
+    -Dorg.inaetics.certificateservice.cahostport=inaetics-ca:8888 \
     -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000"
     
   local props2=-Dgosh.args="--nointeractive --command telnetd --ip=0.0.0.0 start"
