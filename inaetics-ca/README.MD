@@ -25,6 +25,11 @@ In the current version of the CA, the keys are included in to the docker image. 
 If this certificate authority is being run in the demonstrator project, it should be tagged with the following tag.  
 `172.17.8.20:5000/inaetics/inaetics-ca`
 
+To run the container please execute to expose the port 8888.
+```sh
+docker run -p 8888:8888 172.17.8.20:5000/inaetics/inaetics-ca
+```
+
 # CFSSL installation
 1. [Install go](https://golang.org/dl/)  
 2. Get all cfssl tools to your `$GOPATH`  
