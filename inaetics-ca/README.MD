@@ -31,7 +31,7 @@ If this certificate authority is being run in the demonstrator project, it shoul
 ```sh
 $ go get -u github.com/cloudflare/cfssl/cmd/...
 ```
-3. Make sure you have `$GOPATH/bin/` in your `$PATH`
+Make sure you have `$GOPATH/bin/` in your `$PATH`
 
 Detailed info: https://github.com/cloudflare/cfssl/blob/master/BUILDING.md
 
