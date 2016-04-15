@@ -12,7 +12,7 @@ The configuration of the certificate authority can be modified to specify the ti
 ## Java implementation
 
 The Java implementation of the project consists of the following sub projects and bundles:
-- [Complete Java wiring main project](node-wiring-secure-c)
+- [Complete Java wiring main project](node-wiring-secure-java)
   - [INAETICS Trust Storage](node-wiring-secure-java/org.inaetics.truststorage)
     - Is deployed on every node and manages all keys and certificates for this nodes within the INAETICS cluster.
   - [INAETICS Certificate Service](node-wiring-secure-java/org.inaetics.certificateservice)
