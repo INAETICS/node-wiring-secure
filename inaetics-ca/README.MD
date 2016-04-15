@@ -8,6 +8,8 @@ It is really important to generate a key pair before deploying the CA anywhere i
 Keys can be generated using this command:
 `cfssl genkey -initca /etc/cfssl/ca.json | cfssljson ca`
 
+Read below for details on how to install cfssl locally.
+
 # Configuration
 There are a couple things that have to be configured specific to the system. These things can be configured in the `inaetics-ca/ca-config.json` file. Please note, that if you change the port of the CA, you also have to modify the `Dockerfile`.
   - The time that a certificate is valid
@@ -18,6 +20,20 @@ More information on how to configure the CFSSL CA can be found [here](https://gi
 
 # Important TODO's
 In the current version of the CA, the keys are included in to the docker image. This is just intended to make the development process easier and *CAN NOT BE USED IN PRODUCTION*. Please mount a volume or use environment variables for the keys, depending on your orchestration technology. [Example using secrets in Kubernetes.](http://kubernetes.io/docs/user-guide/secrets/)
+
+# Docker Info
+If this certificate authority is being run in the demonstrator project, it should be tagged with the following tag.  
+`172.17.8.20:5000/inaetics/inaetics-ca`
+
+# CFSSL installation
+1. [Install go](https://golang.org/dl/)  
+2. Get all cfssl tools to your `$GOPATH`  
+```sh
+$ go get -u github.com/cloudflare/cfssl/cmd/...
+```
+3. Make sure you have `$GOPATH/bin/` in your `$PATH`
+
+Detailed info: https://github.com/cloudflare/cfssl/blob/master/BUILDING.md
 
 ### Version
 1.0
