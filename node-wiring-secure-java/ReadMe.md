@@ -18,6 +18,6 @@ Using the calculator demo project:
 - change runproperties in the `calculator.\*.bndrun` to your environment
 - start `calculator.client.bndrun` (instance #1)
 - start `calculator.server.bndrun` (instance #2)
-- find the wireId created by the echoService; get the wire address in etcd - `etcdctl ls --recursive /` & `etcdctl get /a/b/c/d`
+- find the wireId created by the calculator service; get the wire address in etcd - `etcdctl ls --recursive /` & `etcdctl get /a/b/c/d`
 - on the Gogo shell of the calculator client execute `add {num1} {num2}`
 - result should be the sum of both numbers.
